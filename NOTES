@@ -1,0 +1,10 @@
+Sun Oct  2 20:40:40 EST 2011
+Seems like cmd vel is actually just one command rather than
+sending a command for a duration.
+just we need to map each command -> action
+
+Also, we actually need two points to localize properly
+I'm thinking a particle filter seems easier even if I have no idea how to implement it
+
+the thing about one observation is that we can only infer x,y coordinates if we know theta... but theta is part of the state too, I'm thinking I'm not making sense
+but we definitely need two points to localize

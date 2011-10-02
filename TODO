@@ -2,4 +2,11 @@ Sat Oct  1 14:59:53 EST 2011
 Fix up starting script
 	- will mentioned that we need to be able to just run a script that will let it to do everything
 
+Sun Oct  2 12:08:25 EST 2011
+Figure out how cmd_vel works
+how commands map to actions
 
+	- this requires going to the robots and running commands
+
+Sun Oct  2 17:53:37 EST 2011
+does the robot always move at full speed
