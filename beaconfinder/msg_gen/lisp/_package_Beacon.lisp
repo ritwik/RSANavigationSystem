@@ -5,4 +5,8 @@
           X
           Y-VAL
           Y
+          DISTANCE-VAL
+          DISTANCE
+          ANGLE-VAL
+          ANGLE
 ))

@@ -6,7 +6,7 @@ import beaconfinder.msg
 import std_msgs.msg
 
 class Beacons(roslib.message.Message):
-  _md5sum = "873d03fb58b312326f8bc5e4bda6e56b"
+  _md5sum = "ac0cecff6584a5aee478b8f6acf64f3c"
   _type = "beaconfinder/Beacons"
   _has_header = True #flag to mark the presence of a Header object
   _full_text = """#Beacons message for publishing a list of beacons from a laser scan to a topic
@@ -45,6 +45,12 @@ float32 x
 
 # The y coordinate (robot relative) of the centre of the beacon
 float32 y
+
+# The distance (robot relative) of the centre of the beacon
+float32 distance
+
+# The angle (robot relative) of the centre of the beacon
+float32 angle
 
 """
   __slots__ = ['header','numBeacons','beacon']
@@ -101,7 +107,7 @@ float32 y
       buff.write(_struct_I.pack(length))
       for val1 in self.beacon:
         _x = val1
-        buff.write(_struct_B2f.pack(_x.ID, _x.x, _x.y))
+        buff.write(_struct_B4f.pack(_x.ID, _x.x, _x.y, _x.distance, _x.angle))
     except struct.error, se: self._check_types(se)
     except TypeError, te: self._check_types(te)
 
@@ -136,8 +142,8 @@ float32 y
         val1 = beaconfinder.msg.Beacon()
         _x = val1
         start = end
-        end += 9
-        (_x.ID, _x.x, _x.y,) = _struct_B2f.unpack(str[start:end])
+        end += 17
+        (_x.ID, _x.x, _x.y, _x.distance, _x.angle,) = _struct_B4f.unpack(str[start:end])
         self.beacon.append(val1)
       return self
     except struct.error, e:
@@ -163,7 +169,7 @@ float32 y
       buff.write(_struct_I.pack(length))
       for val1 in self.beacon:
         _x = val1
-        buff.write(_struct_B2f.pack(_x.ID, _x.x, _x.y))
+        buff.write(_struct_B4f.pack(_x.ID, _x.x, _x.y, _x.distance, _x.angle))
     except struct.error, se: self._check_types(se)
     except TypeError, te: self._check_types(te)
 
@@ -200,14 +206,14 @@ float32 y
         val1 = beaconfinder.msg.Beacon()
         _x = val1
         start = end
-        end += 9
-        (_x.ID, _x.x, _x.y,) = _struct_B2f.unpack(str[start:end])
+        end += 17
+        (_x.ID, _x.x, _x.y, _x.distance, _x.angle,) = _struct_B4f.unpack(str[start:end])
         self.beacon.append(val1)
       return self
     except struct.error, e:
       raise roslib.message.DeserializationError(e) #most likely buffer underfill
 
 _struct_I = roslib.message.struct_I
-_struct_B2f = struct.Struct("<B2f")
 _struct_3I = struct.Struct("<3I")
 _struct_B = struct.Struct("<B")
+_struct_B4f = struct.Struct("<B4f")

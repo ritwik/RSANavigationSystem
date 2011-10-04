@@ -4,7 +4,7 @@ import struct
 
 
 class Beacon(roslib.message.Message):
-  _md5sum = "84629ebbc444e13ee22538b56befaad9"
+  _md5sum = "326f63ce28423410ee4a121fee9aacfd"
   _type = "beaconfinder/Beacon"
   _has_header = False #flag to mark the presence of a Header object
   _full_text = """# Beacon message type, for a single beacon
@@ -18,9 +18,15 @@ float32 x
 # The y coordinate (robot relative) of the centre of the beacon
 float32 y
 
+# The distance (robot relative) of the centre of the beacon
+float32 distance
+
+# The angle (robot relative) of the centre of the beacon
+float32 angle
+
 """
-  __slots__ = ['ID','x','y']
-  _slot_types = ['uint8','float32','float32']
+  __slots__ = ['ID','x','y','distance','angle']
+  _slot_types = ['uint8','float32','float32','float32','float32']
 
   def __init__(self, *args, **kwds):
     """
@@ -30,7 +36,7 @@ float32 y
     changes.  You cannot mix in-order arguments and keyword arguments.
     
     The available fields are:
-       ID,x,y
+       ID,x,y,distance,angle
     
     @param args: complete set of field values, in .msg order
     @param kwds: use keyword arguments corresponding to message field names
@@ -45,10 +51,16 @@ float32 y
         self.x = 0.
       if self.y is None:
         self.y = 0.
+      if self.distance is None:
+        self.distance = 0.
+      if self.angle is None:
+        self.angle = 0.
     else:
       self.ID = 0
       self.x = 0.
       self.y = 0.
+      self.distance = 0.
+      self.angle = 0.
 
   def _get_types(self):
     """
@@ -64,7 +76,7 @@ float32 y
     """
     try:
       _x = self
-      buff.write(_struct_B2f.pack(_x.ID, _x.x, _x.y))
+      buff.write(_struct_B4f.pack(_x.ID, _x.x, _x.y, _x.distance, _x.angle))
     except struct.error, se: self._check_types(se)
     except TypeError, te: self._check_types(te)
 
@@ -78,8 +90,8 @@ float32 y
       end = 0
       _x = self
       start = end
-      end += 9
-      (_x.ID, _x.x, _x.y,) = _struct_B2f.unpack(str[start:end])
+      end += 17
+      (_x.ID, _x.x, _x.y, _x.distance, _x.angle,) = _struct_B4f.unpack(str[start:end])
       return self
     except struct.error, e:
       raise roslib.message.DeserializationError(e) #most likely buffer underfill
@@ -95,7 +107,7 @@ float32 y
     """
     try:
       _x = self
-      buff.write(_struct_B2f.pack(_x.ID, _x.x, _x.y))
+      buff.write(_struct_B4f.pack(_x.ID, _x.x, _x.y, _x.distance, _x.angle))
     except struct.error, se: self._check_types(se)
     except TypeError, te: self._check_types(te)
 
@@ -111,11 +123,11 @@ float32 y
       end = 0
       _x = self
       start = end
-      end += 9
-      (_x.ID, _x.x, _x.y,) = _struct_B2f.unpack(str[start:end])
+      end += 17
+      (_x.ID, _x.x, _x.y, _x.distance, _x.angle,) = _struct_B4f.unpack(str[start:end])
       return self
     except struct.error, e:
       raise roslib.message.DeserializationError(e) #most likely buffer underfill
 
 _struct_I = roslib.message.struct_I
-_struct_B2f = struct.Struct("<B2f")
+_struct_B4f = struct.Struct("<B4f")

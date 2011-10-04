@@ -21,6 +21,16 @@
     :reader y
     :initarg :y
     :type cl:float
+    :initform 0.0)
+   (distance
+    :reader distance
+    :initarg :distance
+    :type cl:float
+    :initform 0.0)
+   (angle
+    :reader angle
+    :initarg :angle
+    :type cl:float
     :initform 0.0))
 )
 
@@ -46,6 +56,16 @@
 (cl:defmethod y-val ((m <Beacon>))
   (roslisp-msg-protocol:msg-deprecation-warning "Using old-style slot reader beaconfinder-msg:y-val is deprecated.  Use beaconfinder-msg:y instead.")
   (y m))
+
+(cl:ensure-generic-function 'distance-val :lambda-list '(m))
+(cl:defmethod distance-val ((m <Beacon>))
+  (roslisp-msg-protocol:msg-deprecation-warning "Using old-style slot reader beaconfinder-msg:distance-val is deprecated.  Use beaconfinder-msg:distance instead.")
+  (distance m))
+
+(cl:ensure-generic-function 'angle-val :lambda-list '(m))
+(cl:defmethod angle-val ((m <Beacon>))
+  (roslisp-msg-protocol:msg-deprecation-warning "Using old-style slot reader beaconfinder-msg:angle-val is deprecated.  Use beaconfinder-msg:angle instead.")
+  (angle m))
 (cl:defmethod roslisp-msg-protocol:serialize ((msg <Beacon>) ostream)
   "Serializes a message object of type '<Beacon>"
   (cl:write-byte (cl:ldb (cl:byte 8 0) (cl:slot-value msg 'ID)) ostream)
@@ -55,6 +75,16 @@
     (cl:write-byte (cl:ldb (cl:byte 8 16) bits) ostream)
     (cl:write-byte (cl:ldb (cl:byte 8 24) bits) ostream))
   (cl:let ((bits (roslisp-utils:encode-single-float-bits (cl:slot-value msg 'y))))
+    (cl:write-byte (cl:ldb (cl:byte 8 0) bits) ostream)
+    (cl:write-byte (cl:ldb (cl:byte 8 8) bits) ostream)
+    (cl:write-byte (cl:ldb (cl:byte 8 16) bits) ostream)
+    (cl:write-byte (cl:ldb (cl:byte 8 24) bits) ostream))
+  (cl:let ((bits (roslisp-utils:encode-single-float-bits (cl:slot-value msg 'distance))))
+    (cl:write-byte (cl:ldb (cl:byte 8 0) bits) ostream)
+    (cl:write-byte (cl:ldb (cl:byte 8 8) bits) ostream)
+    (cl:write-byte (cl:ldb (cl:byte 8 16) bits) ostream)
+    (cl:write-byte (cl:ldb (cl:byte 8 24) bits) ostream))
+  (cl:let ((bits (roslisp-utils:encode-single-float-bits (cl:slot-value msg 'angle))))
     (cl:write-byte (cl:ldb (cl:byte 8 0) bits) ostream)
     (cl:write-byte (cl:ldb (cl:byte 8 8) bits) ostream)
     (cl:write-byte (cl:ldb (cl:byte 8 16) bits) ostream)
@@ -75,6 +105,18 @@
       (cl:setf (cl:ldb (cl:byte 8 16) bits) (cl:read-byte istream))
       (cl:setf (cl:ldb (cl:byte 8 24) bits) (cl:read-byte istream))
     (cl:setf (cl:slot-value msg 'y) (roslisp-utils:decode-single-float-bits bits)))
+    (cl:let ((bits 0))
+      (cl:setf (cl:ldb (cl:byte 8 0) bits) (cl:read-byte istream))
+      (cl:setf (cl:ldb (cl:byte 8 8) bits) (cl:read-byte istream))
+      (cl:setf (cl:ldb (cl:byte 8 16) bits) (cl:read-byte istream))
+      (cl:setf (cl:ldb (cl:byte 8 24) bits) (cl:read-byte istream))
+    (cl:setf (cl:slot-value msg 'distance) (roslisp-utils:decode-single-float-bits bits)))
+    (cl:let ((bits 0))
+      (cl:setf (cl:ldb (cl:byte 8 0) bits) (cl:read-byte istream))
+      (cl:setf (cl:ldb (cl:byte 8 8) bits) (cl:read-byte istream))
+      (cl:setf (cl:ldb (cl:byte 8 16) bits) (cl:read-byte istream))
+      (cl:setf (cl:ldb (cl:byte 8 24) bits) (cl:read-byte istream))
+    (cl:setf (cl:slot-value msg 'angle) (roslisp-utils:decode-single-float-bits bits)))
   msg
 )
 (cl:defmethod roslisp-msg-protocol:ros-datatype ((msg (cl:eql '<Beacon>)))
@@ -85,19 +127,21 @@
   "beaconfinder/Beacon")
 (cl:defmethod roslisp-msg-protocol:md5sum ((type (cl:eql '<Beacon>)))
   "Returns md5sum for a message object of type '<Beacon>"
-  "84629ebbc444e13ee22538b56befaad9")
+  "326f63ce28423410ee4a121fee9aacfd")
 (cl:defmethod roslisp-msg-protocol:md5sum ((type (cl:eql 'Beacon)))
   "Returns md5sum for a message object of type 'Beacon"
-  "84629ebbc444e13ee22538b56befaad9")
+  "326f63ce28423410ee4a121fee9aacfd")
 (cl:defmethod roslisp-msg-protocol:message-definition ((type (cl:eql '<Beacon>)))
   "Returns full string definition for message of type '<Beacon>"
-  (cl:format cl:nil "# Beacon message type, for a single beacon~%~%# These IDs go from 0..n, for n beacons in increasing order of size~%uint8 ID~%~%# The x coordinate (robot relative) of the centre of the beacon~%float32 x~%~%# The y coordinate (robot relative) of the centre of the beacon~%float32 y~%~%~%"))
+  (cl:format cl:nil "# Beacon message type, for a single beacon~%~%# These IDs go from 0..n, for n beacons in increasing order of size~%uint8 ID~%~%# The x coordinate (robot relative) of the centre of the beacon~%float32 x~%~%# The y coordinate (robot relative) of the centre of the beacon~%float32 y~%~%# The distance (robot relative) of the centre of the beacon~%float32 distance~%~%# The angle (robot relative) of the centre of the beacon~%float32 angle~%~%~%"))
 (cl:defmethod roslisp-msg-protocol:message-definition ((type (cl:eql 'Beacon)))
   "Returns full string definition for message of type 'Beacon"
-  (cl:format cl:nil "# Beacon message type, for a single beacon~%~%# These IDs go from 0..n, for n beacons in increasing order of size~%uint8 ID~%~%# The x coordinate (robot relative) of the centre of the beacon~%float32 x~%~%# The y coordinate (robot relative) of the centre of the beacon~%float32 y~%~%~%"))
+  (cl:format cl:nil "# Beacon message type, for a single beacon~%~%# These IDs go from 0..n, for n beacons in increasing order of size~%uint8 ID~%~%# The x coordinate (robot relative) of the centre of the beacon~%float32 x~%~%# The y coordinate (robot relative) of the centre of the beacon~%float32 y~%~%# The distance (robot relative) of the centre of the beacon~%float32 distance~%~%# The angle (robot relative) of the centre of the beacon~%float32 angle~%~%~%"))
 (cl:defmethod roslisp-msg-protocol:serialization-length ((msg <Beacon>))
   (cl:+ 0
      1
+     4
+     4
      4
      4
 ))
@@ -107,4 +151,6 @@
     (cl:cons ':ID (ID msg))
     (cl:cons ':x (x msg))
     (cl:cons ':y (y msg))
+    (cl:cons ':distance (distance msg))
+    (cl:cons ':angle (angle msg))
 ))

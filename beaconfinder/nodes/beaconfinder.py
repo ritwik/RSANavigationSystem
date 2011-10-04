@@ -73,6 +73,22 @@ def getPillarFrom(potentialPoints,k,t,d):
 		
 	return bestCircle
 
+
+def generateBeaconList(pillars):
+	'''Returns a list of beacons sorted by size, labelled by ID (currently assumes smallest one is id 0)
+	*might change this later to actually compare to real beacon sizes and estimate which one each pillar is*
+	'''
+	beacons = []
+	sortedPillars =  sorted(pillars, key=lambda pillar: pillar[2])
+	idCounter = 0
+	for pillar in sortedPillars:
+		[x,y,r] = pillar
+		distance = math.sqrt(x**2 + y**2)
+		angle = math.atan2(y,x)
+		beacons.add(Beacon(idCounter,x,y)
+		idCounter = idCounter + 1
+	return beacons
+		
 def callback(data):
 	#rospy.loginfo("\n Laser read: \n")
 	#rospy.loginfo(data.header)
@@ -104,8 +120,10 @@ def callback(data):
 			pillar = getPillarFrom(potentialPillar,20,0.20,5)
 			pillars.append(pillar)
 			[x,y,r] = pillar
-			beacons.append((Beacon(4,x,y)))
 			rospy.loginfo("Looking at a cloud of %d points, [%.2lf,\t %.2lf \t\ts = %.2lf])", len(potentialPillar), pillar[0],pillar[1],pillar[2]) 
+	
+	beacons = generateBeaconList(pillars)
+	
 			
 	#pillars = getPillarsFrom(potentialPillars)
 	#for [x,y,radius] in pillars:

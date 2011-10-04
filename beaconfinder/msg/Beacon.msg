@@ -8,3 +8,9 @@ float32 x
 
 # The y coordinate (robot relative) of the centre of the beacon
 float32 y
+
+# The distance (robot relative) of the centre of the beacon
+float32 distance
+
+# The angle (robot relative) of the centre of the beacon
+float32 angle
