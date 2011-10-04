@@ -104,7 +104,9 @@ def callback(data):
 			pillar = getPillarFrom(potentialPillar,20,0.20,5)
 			pillars.append(pillar)
 			[x,y,r] = pillar
-			beacons.append((Beacon(4,x,y)))
+			dist = sqrt(x ** 2 + y ** 2)
+			angle = atan2(y,x) # is this correct?
+			beacons.append((Beacon(4,x,y,dist,angle)))
 			rospy.loginfo("Looking at a cloud of %d points, [%.2lf,\t %.2lf \t\ts = %.2lf])", len(potentialPillar), pillar[0],pillar[1],pillar[2]) 
 			
 	#pillars = getPillarsFrom(potentialPillars)

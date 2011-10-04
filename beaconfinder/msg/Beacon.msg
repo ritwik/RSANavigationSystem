@@ -8,3 +8,6 @@ float32 x
 
 # The y coordinate (robot relative) of the centre of the beacon
 float32 y
+
+float32 dist # sqrt(x^2+y^2)
+float32 angle # angle relative to the robot, \Delta \Phi (I think)

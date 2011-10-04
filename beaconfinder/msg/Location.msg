@@ -17,3 +17,13 @@ bool isForward # forward is defined by the robot having an orientation
 # facing the node to be travelled too
 #
 # this needs help with
+#
+#
+
+# this may be super messy but
+float32 dist
+# dist is measured in meters
+# negative is backward, positive forward
+
+float32 turn
+# turn is radians to turn... =)
