@@ -1,0 +1,18 @@
+<package>
+  <description brief="pathplanner">
+
+     pathplanner
+
+  </description>
+  <author>COMP4411 11s1 / COMP9431 11s2 - Ritwik Devasish Royrdro117@cse.unsw.edu.au</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/pathplanner</url>
+  <depend package="std_msgs"/>
+  <depend package="localisation"/>
+  <depend package="roscpp"/>
+  <depend package="rospy"/>
+
+</package>
+
+
