@@ -1,0 +1,15 @@
+<package>
+  <description brief="control">
+
+     control
+
+  </description>
+  <author>Abigail Smith</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/control</url>
+  <depend package="rospy"/>
+
+</package>
+
+
