@@ -8,7 +8,7 @@ from beaconfinder.msg import Beacons,Beacon
 
 import random
 #from numpy import sqrt
-DISTANCE_THRESHOLD = 4.5
+DISTANCE_THRESHOLD = 3
 pub = None
 
 def getCircleFrom(points):
@@ -85,7 +85,7 @@ def generateBeaconList(pillars):
 		[x,y,r] = pillar
 		distance = math.sqrt(x**2 + y**2)
 		angle = math.atan2(y,x)
-		beacons.add(Beacon(idCounter,x,y)
+		beacons.append(Beacon(idCounter,x,y,distance,angle))
 		idCounter = idCounter + 1
 	return beacons
 		
@@ -130,7 +130,7 @@ def callback(data):
 		#rospy.loginfo("[%.2lf,\t %.2lf \t\ts = %.2lf]",x,y,radius)
 	#[x,y,r] = getCircleFrom([-1,0],[0,1],[1,0])
 	#rospy.loginfo("Circle = %lf, %lf, %lf",x,y,r)
-	
+	global pub
 	pub.publish(Beacons(Header(),len(beacons),beacons))
 	
 
