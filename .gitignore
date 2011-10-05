@@ -1,0 +1,30 @@
+# ROS Related#
+Makefile
+*.cmake
+msg_gen
+srv_gen
+CMakeCache.txt
+CmakeFiles
+build/*
+
+#compiled source #
+*.com
+*.class
+*.o
+*.exe
+*.so
+
+
+# Packages #
+*.tar
+*.dmg
+*.7z
+*.zip
+*.rar
+
+# OS generated Files #
+.DS_Store?
+ehthumbs.db
+Icon?
+Thumbs.db
+
