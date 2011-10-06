@@ -7,20 +7,24 @@ from math import *
 
 from localisation.msg import State
 from beaconfinder.msg import Beacons
+from std_msgs.msg import Header
 
-BX = [-100, 0, -100]
-BY = [200, 300, -200]
+#Actual values
+BX = [-1.0, 0.0, -1.0]
+BY = [2.0, 3.0, -2.0]
 
 pub = rospy.Publisher('State', State)
 
 #x, y, theta
-mean = array([[0.0, 0.0, 0.0]])
-covar = array([[250000.0, 250000.0, 250000.0]])
+mean = array([[0.0], [0.0], [0.0]])
+covar = array([[25000.0, 0.0, 0.0], [0.0, 25000.0, 0.0], [0.0, 0.0, 2 * pi]])
 
 def publishState():
     global pub
+    global mean
+    global covar
     #Chuck mean and covar into state message and publish
-    pub.publish(State(Header(), mean[0, 0], mean[0, 1], mean[0, 2], covar[0, 0], covar[0, 1], covar[0, 2]))
+    pub.publish(State(Header(), mean[0, 0], mean[1, 0], mean[2, 0], covar[0, 0], covar[1, 1], covar[2, 2]))
 
 def actionUpdate(move):
     #Set up necessary matrices
@@ -38,14 +42,14 @@ def actionUpdate(move):
     E = array([[0.1 + 0.01 * abs(move.fwd), 0, 0],
                [0, 0.1 + 0.01 * abs(move.fwd), 0],
                [0, 0, 5 * 180 / pi + 0.1 * abs(move.phi)]]) #Should these be squared?!
-    Q = R * E * transpose(R)
+    Q = dot(dot(R, E), transpose(R))
 
     #Chuck action into matrix too
     u = array([[move.fwd, move.phi]])
 
     #Plug into formulae to get new mean and covariance
-    mean = F * mean + B * u
-    covar = F * covar * transpose(F) + Q
+    mean = dot(dot(F, mean) + B, u)
+    covar = dot(dot(F, covar), transpose(F)) + Q
 
     #Chuck mean and covar into state message and publish
     publishState()
@@ -56,34 +60,49 @@ def observationUpdate(data):
 
     for b in data.beacon:
         x = mean[0, 0]
-        y = mean[0, 1]
+        y = mean[1, 0]
 
         dx = x - BX[b.ID]
         dy = y - BY[b.ID]
 
-        print dx
-        print dy
-
         #Set up necessary matrices
         H = array([[0, 0, 0],
-                   [dx / ((x ** 2 - 2 * x * BX[b.ID]) ** 0.5), dy / ((y ** 2 - 2 * y * BY[b.ID]) ** 0.5), 0],
+                   [dx / ((dx ** 2 + dy ** 2) ** 0.5), dy / ((dx ** 2 + dy ** 2) ** 0.5), 0],
                    [-dy / (dx ** 2 + dy ** 2), dx / (dx ** 2 + dy ** 2), -1]])
 
-        R = array([[0, 0, 0],
-                   [0, 0.1 + 0.01 * b.distance, 0],
-                   [0, 0, 5 * 180 / pi + 0.1 * abs(b.angle)]]) #Should these be squared?!
+        print "H = " + str(H)
 
-        print H
+        R = array([[1, 1, 1],
+                   [0, 0.3 + 0.01 * b.distance, 0],
+                   [0, 0, pi / 18 + 0.1 * abs(b.angle)]]) #Should these be squared?!
+
+        print "R = " + str(R)
+
         #Chuck beacon observation into matrix
-        z = array([[b.ID, b.distance, b.angle]])
+        z = array([[0], [b.distance], [b.angle]])
+
+        print "z = " + str(z)
 
         #Plug into formulae to get new mean and covariance
-        y = z - H * mean
-        S = H * covar * transpose(H) + R
-        K = covar * transpose(H) * linalg.inv(S)
+        y = z - dot(H, mean)
 
-        mean = mean + K * y
-        covar = (eye(3) - K * H) * covar
+        print "y = " + str(y)
+
+        S = dot(dot(H, covar), transpose(H)) + R
+    
+        print "S = " + str(S)
+
+        K = dot(dot(covar, transpose(H)), linalg.inv(S))
+
+        print "K = " + str(K)
+
+        mean = mean + dot(K, y)
+
+        print "mean = " + str(mean)
+
+        covar = dot((eye(3) - dot(K, H)), covar)
+
+        print "covar = " + str(covar)
 
         publishState()
         

@@ -80,13 +80,19 @@ def generateBeaconList(pillars):
 	'''
 	beacons = []
 	sortedPillars =  sorted(pillars, key=lambda pillar: pillar[2])
-	idCounter = 0
 	for pillar in sortedPillars:
 		[x,y,r] = pillar
 		distance = math.sqrt(x**2 + y**2)
 		angle = math.atan2(y,x)
-		beacons.append(Beacon(idCounter,x,y,distance,angle))
-		idCounter = idCounter + 1
+
+        #Temporary testing hack
+		id = 0
+		if r < 0.1:
+			id = 0
+		else:
+			id = 2
+
+		beacons.append(Beacon(id,x,y,distance,angle))
 	return beacons
 		
 def callback(data):
