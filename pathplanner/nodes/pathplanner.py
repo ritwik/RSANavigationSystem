@@ -95,6 +95,8 @@ def findPath(startNode):
                                 currNode.path.add(currNode), timesAndHeadings.bwdTime)
             
 def chooseBestPath():
+    #May need to create a Node message?
+    #Yep
     pub.publish(new Path())
 
 def __main__():
