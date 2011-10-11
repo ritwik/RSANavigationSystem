@@ -17,7 +17,7 @@ pub = rospy.Publisher('State', State)
 
 #x, y, theta
 mean = array([[0.0], [0.0], [0.0]])
-covar = array([[25000.0, 0.0, 0.0], [0.0, 25000.0, 0.0], [0.0, 0.0, 2 * pi]])
+covar = array([[5.0, 0.0, 0.0], [0.0, 5.0, 0.0], [0.0, 0.0, pi]])
 
 def publishState():
     global pub
@@ -62,19 +62,25 @@ def observationUpdate(data):
         x = mean[0, 0]
         y = mean[1, 0]
 
-        dx = x - BX[b.ID]
-        dy = y - BY[b.ID]
+        dx = BX[b.ID] - x
+        dy = BY[b.ID] - y
+
+        print dx
+        print dy
 
         #Set up necessary matrices
+        #Something tells me this is very wrong atm
         H = array([[0, 0, 0],
-                   [dx / ((dx ** 2 + dy ** 2) ** 0.5), dy / ((dx ** 2 + dy ** 2) ** 0.5), 0],
-                   [-dy / (dx ** 2 + dy ** 2), dx / (dx ** 2 + dy ** 2), -1]])
+                   [dx / sqrt(dx ** 2 + dy ** 2), dy / sqrt(dx ** 2 + dy ** 2), 0],
+                   [dy / (dx ** 2 + dy ** 2), -dx / (dx ** 2 + dy ** 2), -1]])
 
         print "H = " + str(H)
 
+        print "Hx = " + str(dot(H, mean))
+
         R = array([[1, 1, 1],
-                   [0, 0.3 + 0.01 * b.distance, 0],
-                   [0, 0, pi / 18 + 0.1 * abs(b.angle)]]) #Should these be squared?!
+                   [0, 0.03 * b.distance, 0],
+                   [0, 0, 0.1 * abs(b.angle)]]) #Should these be squared?!
 
         print "R = " + str(R)
 
@@ -82,6 +88,7 @@ def observationUpdate(data):
         z = array([[0], [b.distance], [b.angle]])
 
         print "z = " + str(z)
+        print b.angle * 180 / pi
 
         #Plug into formulae to get new mean and covariance
         y = z - dot(H, mean)
