@@ -3,8 +3,6 @@
 from numpy import *
 from math import *
 
-
-
 mean = array([[0.0], [0.0], [0.0]])
 covar = array([[25000.0, 0.0, 0.0], [0.0, 25000.0, 0.0], [0.0, 0.0, 25000.0]])
 
@@ -15,7 +13,7 @@ def observationUpdate(dx, dy, distance, angle):
     #Set up necessary matrices
     #Something tells me this is very wrong atm
     H = array([[0, 0, 0],
-               [dx / sqrt(dx ** 2 + dy ** 2), dy / sqrt(dx ** 2 + dy ** 2), 0],
+               [-dx / sqrt(dx ** 2 + dy ** 2), -dy / sqrt(dx ** 2 + dy ** 2), 0],
                [dy / (dx ** 2 + dy ** 2), -dx / (dx ** 2 + dy ** 2), -1]])
 
     print "H = " + str(H)
@@ -56,6 +54,17 @@ def observationUpdate(dx, dy, distance, angle):
     print "covar = " + str(covar)
 
 for i in range(0, 10):
-    observationUpdate(-1.0, 2.0, 5 ** 0.5, atan2(2.0, 1.0))
-    observationUpdate(-1.0, -2.0, 5 ** 0.5, atan2(-2.0, 1.0))
-    #This works!
+    #This works...or not...
+    #observationUpdate(1.0, 2.0, 5 ** 0.5, atan2(2.0, 1.0))
+    #observationUpdate(1.0, -2.0, 5 ** 0.5, atan2(-2.0, 1.0))
+
+    #observationUpdate(-1.0, 2.0, 5 ** 0.5, atan2(2.0, -1.0))
+    #observationUpdate(-1.0, -2.0, 5 ** 0.5, atan2(-2.0, -1.0))
+
+    #This is converging to pi???
+    #It's possible, not too likely, but possible
+    #dx, dy, dist, angle
+    observationUpdate(0.0, 2.0, 2.0, pi / 2)
+    observationUpdate(0.0, -2.0, 2.0, -pi / 2)
+
+    #observationUpdate(-1.0, 0.0, 1.0, 
