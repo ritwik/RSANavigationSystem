@@ -16,7 +16,7 @@ BY = [2.0, 3.0, -2.0]
 pub = rospy.Publisher('State', State)
 
 #x, y, theta
-mean = array([[0.0], [0.0], [0.0]])
+mean = array([[1.1], [-2.1], [0.501]])
 covar = array([[25000.0, 0.0, 0.0], [0.0, 25000.0, 0.0], [0.0, 0.0, 25000.0]])
 
 def publishState():
@@ -75,11 +75,13 @@ def observationUpdate(data):
 
         print "H = " + str(H)
 
-        print "Hx = " + str(dot(H, mean))
+        Hx = array([[0], [sqrt(dx ** 2 + dy ** 2)], [atan2(dy, dx) - mean[2, 0]]])
+
+        print "Hx = " + str(Hx)
 
         R = array([[1, 1, 1],
-                   [0, 0.1 * b.distance, 0],
-                   [0, 0, 0.1 * abs(b.angle)]]) #Should these be squared?!
+                   [0, 0.02 + 0.01 * (dx ** 2 + dy ** 2), 0],
+                   [0, 0, 0.1]]) 
 
         print "R = " + str(R)
 
@@ -90,7 +92,8 @@ def observationUpdate(data):
         print b.angle * 180 / pi
 
         #Plug into formulae to get new mean and covariance
-        y = z - dot(H, mean)
+
+        y = z - Hx #dot(H, mean)
 
         print "y = " + str(y)
 
@@ -103,6 +106,10 @@ def observationUpdate(data):
         print "K = " + str(K)
 
         mean = mean + dot(K, y)
+        while mean[2,0] >= pi:
+            mean[2,0] = mean[2,0] - 2 * pi
+        while mean[2,0] < -pi:
+            mean[2,0] = mean[2,0] + 2 * pi
 
         print "mean = " + str(mean)
 
