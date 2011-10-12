@@ -10,8 +10,8 @@ from beaconfinder.msg import Beacons
 from std_msgs.msg import Header
 
 #Actual values
-BX = [-1.0, 0.0, -1.0]
-BY = [2.0, 3.0, -2.0]
+BX = [-1.0, -1.0, 0.0]
+BY = [2.0, -2.0, 3.0]
 
 pub = rospy.Publisher('State', State)
 
@@ -76,11 +76,13 @@ def observationUpdate(data):
 
         print "H = " + str(H)
 
-        print "Hx = " + str(dot(H, mean))
+        Hx = array([[0], [sqrt(dx ** 2 + dy ** 2)], [atan2(dy, dx) - mean[2, 0]]])
+
+        print "Hx = " + str(Hx)
 
         R = array([[1, 1, 1],
-                   [0, 0.03 * b.distance, 0],
-                   [0, 0, 0.1 * abs(b.angle)]]) #Should these be squared?!
+                   [0, 0.02 + 0.01 * (dx ** 2 + dy ** 2), 0],
+                   [0, 0, 0.1]]) 
 
         print "R = " + str(R)
 
@@ -106,6 +108,10 @@ def observationUpdate(data):
         mean = mean + dot(K, y)
 
         print "mean = " + str(mean)
+        while mean[2,0] >= pi:
+            mean[2,0] = mean[2,0] - 2 * pi
+        while mean[2,0] < -pi:
+            mean[2,0] = mean[2,0] + 2 * pi
 
         covar = dot((eye(3) - dot(K, H)), covar)
 

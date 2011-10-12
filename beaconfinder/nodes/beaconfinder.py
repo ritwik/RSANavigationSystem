@@ -90,7 +90,7 @@ def generateBeaconList(pillars):
 		if r < 0.1:
 			id = 0
 		else:
-			id = 2
+			id = 1
 
 		beacons.append(Beacon(id,x,y,distance,angle))
 	return beacons
