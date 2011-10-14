@@ -8,8 +8,23 @@ from beaconfinder.msg import Beacons,Beacon
 
 import random
 #from numpy import sqrt
-DISTANCE_THRESHOLD = 3
+
+#All these constants are in mm where they refer to a distance
+
+#This sets the maximum distance of a scan point to consider
+DISTANCE_THRESHOLD = 5000 
+
+#This is the distance difference between 1 point and the next on a scan that is considered an 'edge', i.e. new beacon
+BEACON_JUMP_THRESHOLD = 75
+
+#This is the accepted error from the known beacon radius that we accept, i.e, a circle we find is beacon A, if circle.radius is A.radius+/- BEACON_MATCH_THRESHOLD
+BEACON_MATCH_THRESHOLD = 30
+
+#The max acceptable error from a consensus set to it's predicted circle. This lets us ignore walls. Smaller values = only accept more distinct circles
+ERROR_THRESHOLD = 100
 pub = None
+
+realBeacons = [[0,-1,2,52],[1,-1,-2,138],[2,3,0,223]]
 
 def getCircleFrom(points):
 	((x1,y1),(x2,y2),(x3,y3)) = points
@@ -40,7 +55,7 @@ def getPillarFrom(potentialPoints,k,t,d):
 	iterations = 0
 	bestCircle = []
 	bestConsensus_set = []
-	bestError = 0
+	bestError = ERROR_THRESHOLD
 	
 	while iterations < k :
 		possibleInliers = random.sample(potentialPoints, 3)
@@ -68,10 +83,17 @@ def getPillarFrom(potentialPoints,k,t,d):
 			bestCircle =  possibleCircle
 			bestConsensusSet = consensusSet
 			bestError = circleError
+			#print "Best error is ",bestError
 		
 		iterations = iterations +1	
-		
-	return bestCircle
+	
+	[x,y,r] = bestCircle
+	if (bestError < ERROR_THRESHOLD):
+		#print "Keeping pillar: ",potentialPoints[0], " to ",potentialPoints[-1], "with radius: ",r, " and error: ",bestError
+		return bestCircle
+	else: 
+		#print "Dropping pillar: ",potentialPoints[0], " to ",potentialPoints[-1]
+		return [0,0,0]
 
 
 def generateBeaconList(pillars):
@@ -84,53 +106,56 @@ def generateBeaconList(pillars):
 		[x,y,r] = pillar
 		distance = math.sqrt(x**2 + y**2)
 		angle = math.atan2(y,x)
-
-        #Temporary testing hack
-		id = 0
-		if r < 0.1:
-			id = 0
-		else:
-			id = 2
-
-		beacons.append(Beacon(id,x,y,distance,angle))
+		for realBeacon in realBeacons:
+			[bid,bx,by,br] = realBeacon
+			if abs(br - r) < BEACON_MATCH_THRESHOLD:
+				print "pillar: ",x,", ",y,", ",r," matches beacon ",bid," Keeping"
+				beacons.append(Beacon(bid,bx,by,distance/1000,angle))
+				break
+			else:
+				print "pillar: ",x,", ",y,", ",r," does not match beacon ",bid
 	return beacons
 		
 def callback(data):
-	#rospy.loginfo("\n Laser read: \n")
-	#rospy.loginfo(data.header)
-	#rospy.loginfo(data.ranges)
+	# rospy.loginfo("\n Laser read: \n")
+	# rospy.loginfo(data.header)
+	# rospy.loginfo(data.ranges)
 	potentialPillars = []
 	currentPillar = []
 	angleIncrement = data.angle_increment
 	startAngle = data.angle_min
+	prevDistance = DISTANCE_THRESHOLD
 	for index,distance in enumerate(data.ranges):
-		if distance < DISTANCE_THRESHOLD:
+		distance = distance * 1000
+		if (distance < DISTANCE_THRESHOLD):
 			pointx = distance * math.cos(startAngle+ index*angleIncrement) 
 			pointy = distance * math.sin(startAngle+ index*angleIncrement)
-			if (len(currentPillar) == 0):
-			# no current pillar, start one
-				currentPillar = []
-				currentPillar.append([pointx,pointy])
-			else:
-				currentPillar.append([pointx,pointy])
+			if (abs(distance-prevDistance) > BEACON_JUMP_THRESHOLD):
+				#close the older pillar if there was one
+				if (len(currentPillar) > 0):
+					potentialPillars.append(currentPillar)
+					currentPillar = []
+			currentPillar.append([pointx,pointy])
 		else:
 			if (len(currentPillar) > 0):
 				potentialPillars.append(currentPillar)
-				currentPillar = []	
-	rospy.loginfo("Found %d pillars", len(potentialPillars));
+				currentPillar = []
+		prevDistance = distance	
+	rospy.loginfo("Found %d potential pillars", len(potentialPillars));
 	pillars = []
 	beacons = []
 	for potentialPillar in potentialPillars:
 		#rospy.loginfo("Looking at a cloud of %d points, [%.2lf,\t %.2lf \t\ts = %.2lf])", len(potentialPillar),
 		if len(potentialPillar)>=3:
 			pillar = getPillarFrom(potentialPillar,20,0.20,5)
-			pillars.append(pillar)
 			[x,y,r] = pillar
-			rospy.loginfo("Looking at a cloud of %d points, [%.2lf,\t %.2lf \t\ts = %.2lf])", len(potentialPillar), pillar[0],pillar[1],pillar[2]) 
-	
+			if r > 0:	
+				pillars.append(pillar)
+				rospy.loginfo("Looking at a cloud of %d points, found: [%.2lf,\t %.2lf \t %.2lf])", len(potentialPillar), pillar[0],pillar[1],pillar[2]) 
 	beacons = generateBeaconList(pillars)
-	
-			
+	rospy.loginfo("Found %d beacons", len(beacons))
+	print beacons
+	 
 	#pillars = getPillarsFrom(potentialPillars)
 	#for [x,y,radius] in pillars:
 		#rospy.loginfo("[%.2lf,\t %.2lf \t\ts = %.2lf]",x,y,radius)
