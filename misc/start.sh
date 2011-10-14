@@ -21,7 +21,8 @@ exec 3>/dev/ttyS2
 rosrun p2os_driver p2os &
 rosparam set sicklms/port /dev/ttyS2
 rosparam set sicklms/baud 38400
-rosrun beaconfinder beaconfinder.py
+rosrun sicktoolbox_wrapper sicklms
+# rosrun beaconfinder beaconfinder.py
 SETVAR
 )
 echo "$variable"
@@ -33,7 +34,7 @@ ssh $ROBOT "chmod +x script.sh;~/script.sh"
 
 rosrun p2os_dashboard p2os_dashboard & # keep one up just in case
 
-rosrun pull...
+# rosrun pull...
 
 rosrun beaconfinder beaconfinder.py
 
