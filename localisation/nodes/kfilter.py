@@ -148,7 +148,7 @@ def kfilter():
     pub = rospy.Publisher('State', State)
     rospy.init_node('localisation', anonymous=True)
     rospy.Subscriber("BeaconScan", Beacons, observationUpdate)
-    #rospy.Subscriber("Movement", Movements, actionUpdate)
+    rospy.Subscriber("Movement", Move, actionUpdate)
     rospy.spin()
 
 if __name__ == '__main__':

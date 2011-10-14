@@ -1,7 +1,12 @@
 #!/usr/bin/python
+import roslib; roslib.load_manifest('pathplanner')
+import rospy
 
 import math
 from math import atan2,pi
+
+from pathplanner.msg import Path, PathNode
+
 #Algo
 #Construct a tree
 #Breadth first search
@@ -30,40 +35,34 @@ class Coordinate:
         self.x = x
         self.y = y
 
-class TimesAndHeadings:
-    def __init__(self, fwdTime, fwdHeading, bwdTime, bwdHeading):
-        self.fwdTime = fwdTime
-        self.fwdHeading = fwdHeading
-        self.bwdTime = bwdTime
-        self.bwdHeading = bwdHeading
-
 def newTimesAndHeadings(fromNode, toCoordinate):
     dy = fromNode.y - toCoordinate.y
     dx = fromNode.x - toCoordinate.x
 
-    distance = math.sqrt(dx** 2 + dy ** 2)
+    distance = math.sqrt(dx ** 2 + dy ** 2)
 
     newHeading = atan2(dy, dx)   
+    currHeading = fromNode.heading
     if newHeading < 0:
-        newHeading = newHeading + 2 * math.pi
-    if fromNode.heading < 0:
-        fromNode.heading = fromNode.heading + 2 * math.pi
+        newHeading = newHeading + 2 * pi
+    if currHeading < 0:
+        currHeading = currHeading + 2 * pi
 
-    angleBetween = newHeading - fromNode.heading
+    angleBetween = newHeading - currHeading
 
     if angleBetween > 0:
         if angleBetween <= pi:
             fwdAngle = angleBetween
             bwdAngle = pi - angleBetween
         else:
-            fwdAngle = angleBetween - 2*pi
+            fwdAngle = angleBetween - 2 * pi
             bwdAngle = angleBetween - pi
     else:
         if angleBetween >= -pi:
             fwdAngle = angleBetween
             bwdAngle = pi - angleBetween
         else:
-            fwdAngle = angleBetween + 2*pi
+            fwdAngle = angleBetween + 2 * pi
             bwdAngle = angleBetween + pi
     
     #4 options: turn positive or negative, move backwards or forwards
@@ -77,24 +76,39 @@ def newTimesAndHeadings(fromNode, toCoordinate):
     fwdTime = distance / FORWARD_SPEED + fwdAngle / TURN_SPEED
     bwdTime = distance / FORWARD_SPEED + bwdAngle / TURN_SPEED
 
-    return TimesAndHeadings(fwdTime, newHeading, bwdTime, bwdHeading)
+    while newHeading >= pi:
+        newHeading = newHeading - 2 * pi
+    while newHeading < -pi:
+        newHeading = newHeading + 2 * pi
+
+    while bwdHeading >= pi:
+        bwdHeading = bwdHeading - 2 * pi
+    while bwdHeading < -pi:
+        bwdHeading = bwdHeading + 2 * pi
+
+    return fwdTime, newHeading, bwdTime, bwdHeading
 
 def findPath(startNode):
     pQueue.append(startNode)
 
     while len(pQueue) != 0:
         currNode = pQueue.pop(0)
+
         if not currNode.remaining:
             fullPaths.append(currNode)
         else:
             for unexplored in currNode.remaining:
-                timesAndHeadings = newTimesAndHeadings(currNode, unexplored)
-                
-                #pQueue.append(Node(unexplored.x, unexplored.y, timesAndHeadings.fwdHeading, [n for n in currNode.remaining if n != unexplored], currNode.path.append(currNode), timesAndHeadings.fwdTime)
-                #pQueue.append(Node(unexplored.x, unexplored.y, timesAndHeadings.bwdHeading, [n for n in currNode.remaining if n != unexplored], currNode.path.append(currNode), timesAndHeadings.bwdTime)
+                fwdTime, fwdHeading, bwdTime, bwdHeading = newTimesAndHeadings(currNode, unexplored)
+                print fwdTime, fwdHeading, bwdTime, bwdHeading
+
+                newPath = list(currNode.path)
+                newPath.append(currNode)
+                pQueue.append(Node(unexplored.x, unexplored.y, fwdHeading, [n for n in currNode.remaining if n != unexplored], newPath, fwdTime))
+
+                newPath = list(currNode.path)
+                newPath.append(currNode)
+                pQueue.append(Node(unexplored.x, unexplored.y, bwdHeading, [n for n in currNode.remaining if n != unexplored], newPath, bwdTime))
             
-
-
 def chooseBestPath():
     minTime = 0
     bestPath = None
@@ -105,20 +119,20 @@ def chooseBestPath():
     
     pathNodes = []
     for n in bestPath.path:
-        pathNodes.append(Node(n.x, x.y, n.heading))
-        #print "x="n.x, ", ", "y=",n.y," ","heading=",n.heading
-    pathNodes.append(bestPath.x, bestPath.y, bestPath.heading)
-    print "The best path is: ",pathNodes
+        pathNodes.append(PathNode(n.x, n.y, n.heading))
+    pathNodes.append(PathNode(bestPath.x, bestPath.y, bestPath.heading))
+
+    print "The best path is: ", pathNodes
     #pub.publish(new Path(Header(), pathNodes))
 
 if __name__ == "__main__":
     #Open file, get nodes
-    print "In main"
     c1 = Coordinate(1,2)
     c2 = Coordinate(2,1)
     c3 = Coordinate(3,3)
+
     print "Finding all paths"
-    print fullPaths
-    findPath(Node(0, 0, 0, [c1,c2,c3],[],0.0))
+    findPath(Node(0, 0, 0, [c1,c2,c3], [], 0.0))
+
     print "Choosing best path"
     chooseBestPath()
