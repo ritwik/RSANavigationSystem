@@ -1,0 +1,50 @@
+Needed:
+    - Movement messages which go from the Drive to KFilter - added
+        - fwd
+        - phi
+    - State messages - added
+        - x global
+        - y global
+        - theta
+    - Message between Main and PathPlanning
+        - Don't know yet
+        - Could be simple
+        - Could be complicated
+
+Error:
+    - Observations
+
+    - Actions
+        - Forward
+            - Make it go 4 metres
+            - Time how long it takes
+            - Do this 5 times
+            - Average
+            - Find variance
+            - Based on that figure out error in DISTANCE
+            - Repeat for other distances
+            - Plot to figure out which is the constant error, which is where the line intersects with the y-axis
+        - Turn
+            - Similar to the above
+            - May
+
+Values:
+    - 0.5 is the max vel
+        - probably metres/sec
+    
+
+going at 0.5 cmd_vel for 1.5s -> 69 +- 2
+0.4 -> 56
+0.25 -> 33 (we had an outlier of 28)
+0.3 -> 41
+0.07 -> 8/9
+0.05 -> 5.5
+reset button thing
+
+
+turns
+
+0.5 -> ~45 !
+1 -> ~90
+
+without times

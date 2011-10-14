@@ -114,6 +114,7 @@ def generateBeaconList(pillars):
 				break
 			else:
 				print "pillar: ",x,", ",y,", ",r," does not match beacon ",bid
+
 	return beacons
 		
 def callback(data):

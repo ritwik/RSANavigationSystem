@@ -7,17 +7,25 @@ from math import *
 
 from localisation.msg import State
 from beaconfinder.msg import Beacons
+from control.msg import Move
 from std_msgs.msg import Header
+from nav_msgs.msg import Odometry
+from geometry_msgs.msg import PoseWithCovariance, Pose, Point, Quaternion
+
+from tf.transformations import euler_from_quaternion
 
 #Actual values
-BX = [-1.0, 0.0, -1.0]
-BY = [2.0, 3.0, -2.0]
+BX = [-1.0, -1.0, 3.0]
+BY = [2.0, -2.0, 0.0]
 
 pub = rospy.Publisher('State', State)
 
 #x, y, theta
 mean = array([[0.0], [0.0], [0.0]])
-covar = array([[5.0, 0.0, 0.0], [0.0, 5.0, 0.0], [0.0, 0.0, pi]])
+covar = array([[25000.0, 0.0, 0.0], [0.0, 25000.0, 0.0], [0.0, 0.0, 25000.0]])
+
+#Old odometry
+prevPose = None;
 
 def publishState():
     global pub
@@ -26,30 +34,42 @@ def publishState():
     #Chuck mean and covar into state message and publish
     pub.publish(State(Header(), mean[0, 0], mean[1, 0], mean[2, 0], covar[0, 0], covar[1, 1], covar[2, 2]))
 
-def actionUpdate(move):
+def actionUpdate(pose):
+    global mean
+    global covar
+
+    if prevPose = None:
+        prevPose = pose
+        return
+
+    #Calculate the change in pose, i.e. the action
+    dx = pose.pose.pose.position.x - prevPose.pose.pose.position.x
+    dy = pose.pose.pose.position.x - prevPose.pose.pose.position.y
+    #Use the http://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles, conversion, only 1 is non-zero
+    dt = atan2((2 * pose.pose.pose.orientation.z * pose.pose.pose.orientation.w), (1 - 2 * (pose.pose.pose.orientation.z))) - 
+         atan2((2 * prevPose.prevPose.prevPose.orientation.z * prevPose.prevPose.prevPose.orientation.w), (1 - 2 * (prevPose.prevPose.prevPose.orientation.z)))
+
     #Set up necessary matrices
-    F = array([[1, 0, -move.fwd * sin(theta)],
-               [0, 1, move.fwd * cos(theta)],
+    F = array([[1, 0, 0],
+               [0, 1, 0],
                [0, 0, 1]])
 
-    B = array([[cos(theta), 0],
-               [sin(theta), 0],
-               [0, 1]])
+    print "F = " + str(F)
 
-    R = array([[cos(theta), -sin(theta), 0]
-               [sin(theta), cos(theta), 0],
-               [0, 0, 1]])
-    E = array([[0.1 + 0.01 * abs(move.fwd), 0, 0],
-               [0, 0.1 + 0.01 * abs(move.fwd), 0],
-               [0, 0, 5 * 180 / pi + 0.1 * abs(move.phi)]]) #Should these be squared?!
-    Q = dot(dot(R, E), transpose(R))
+    Q = array([[(0.1 + 0.01 * abs(dx)) ** 2, 0, 0],
+               [0, (0.1 + 0.01 * abs(dy)) ** 2, 0],
+               [0, 0, (5 * 180 / pi + 0.05 * abs(dt)) ** 2]])
 
-    #Chuck action into matrix too
-    u = array([[move.fwd, move.phi]])
+    print "Q = " + str(Q)
 
     #Plug into formulae to get new mean and covariance
-    mean = dot(dot(F, mean) + B, u)
+    mean = array([[mean[0,0] + dx], [mean[1,0] + dy], [mean[2,0] + dt]])
+
+    print "mean = " + str(mean)
+
     covar = dot(dot(F, covar), transpose(F)) + Q
+
+    print "covar = " + str(covar)
 
     #Chuck mean and covar into state message and publish
     publishState()
@@ -65,22 +85,23 @@ def observationUpdate(data):
         dx = BX[b.ID] - x
         dy = BY[b.ID] - y
 
-        print dx
-        print dy
+        print "Dx = " + str(dx)
+        print "Dy = " + str(dy)
 
         #Set up necessary matrices
-        #Something tells me this is very wrong atm
         H = array([[0, 0, 0],
-                   [dx / sqrt(dx ** 2 + dy ** 2), dy / sqrt(dx ** 2 + dy ** 2), 0],
+                   [-dx / sqrt(dx ** 2 + dy ** 2), -dy / sqrt(dx ** 2 + dy ** 2), 0],
                    [dy / (dx ** 2 + dy ** 2), -dx / (dx ** 2 + dy ** 2), -1]])
 
         print "H = " + str(H)
 
-        print "Hx = " + str(dot(H, mean))
+        Hx = array([[0], [sqrt(dx ** 2 + dy ** 2)], [atan2(dy, dx) - mean[2, 0]]])
+
+        print "Hx = " + str(Hx)
 
         R = array([[1, 1, 1],
-                   [0, 0.03 * b.distance, 0],
-                   [0, 0, 0.1 * abs(b.angle)]]) #Should these be squared?!
+                   [0, 0.02 + 0.01 * (dx ** 2 + dy ** 2), 0],
+                   [0, 0, 0.1]]) 
 
         print "R = " + str(R)
 
@@ -91,7 +112,11 @@ def observationUpdate(data):
         print b.angle * 180 / pi
 
         #Plug into formulae to get new mean and covariance
-        y = z - dot(H, mean)
+        y = z - Hx #dot(H, mean)
+        while y[2,0] >= pi:
+            y[2,0] = y[2,0] - 2 * pi
+        while y[2,0] < -pi:
+            y[2,0] = y[2,0] + 2 * pi
 
         print "y = " + str(y)
 
@@ -106,6 +131,10 @@ def observationUpdate(data):
         mean = mean + dot(K, y)
 
         print "mean = " + str(mean)
+        while mean[2,0] >= pi:
+            mean[2,0] = mean[2,0] - 2 * pi
+        while mean[2,0] < -pi:
+            mean[2,0] = mean[2,0] + 2 * pi
 
         covar = dot((eye(3) - dot(K, H)), covar)
 
@@ -117,8 +146,8 @@ def kfilter():
     global pub
     pub = rospy.Publisher('State', State)
     rospy.init_node('localisation', anonymous=True)
-    rospy.Subscriber("BeaconScan", Beacons, observationUpdate)
-    #rospy.Subscriber("Movement", Movements, actionUpdate)
+    rospy.Subscriber('BeaconScan', Beacons, observationUpdate)
+    rospy.Subscriber('Pose', PoseWithCovariance, actionUpdate)
     rospy.spin()
 
 if __name__ == '__main__':

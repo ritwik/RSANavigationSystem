@@ -10,8 +10,10 @@
   <url>http://ros.org/wiki/localisation</url>
   <depend package="std_msgs"/>
   <depend package="beaconfinder"/>
+  <depend package="control"/>
   <depend package="roscpp"/>
   <depend package="rospy"/>
+  <depend package="tf"/>
 
 </package>
 
