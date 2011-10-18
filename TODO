@@ -1,3 +1,27 @@
+~~~~~~~~~~
+Tue Oct 18 19:51:53 EST 2011
+So we have:
+- Working beacon detection
+- Working kalman filter (? - needs more testing)
+- Working path planner (? - needs more testing)
+- Partly tested drive/controller code
+
+For tomorrow we need to:
+- Get that drive working for arbitrary paths we feed it for testing
+- Get the path planner to plan from a given point on the robot and see what that plan is (test that it is good)
+- Consider how to determine whether it is worth pursuing a point further at any given time (as opposed to dropping it and going for the next point)
+- Planning what we'll do at the very start
+- Test the full system. 
+- Writing a script to start the entire system in one line (is this written already?)
+
+We'll be in the lab from 9(ish) and Aditya and I will be there most of the day (+/- a few hours to work on other assignments).
+
+Let's
+- get to the lab and work on some of this
+- figure out how we're going at 11am and reconsider what we need to focus on / get done
+
+~~~
+
 Sat Oct  1 14:59:53 EST 2011
 Fix up starting script
 	- will mentioned that we need to be able to just run a script that will let it to do everything
