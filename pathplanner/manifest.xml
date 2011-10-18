@@ -9,6 +9,8 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/pathplanner</url>
   <depend package="std_msgs"/>
+  <depend package="geometry_msgs"/>
+  <depend package="nav_msgs"/>
   <depend package="localisation"/>
   <depend package="roscpp"/>
   <depend package="rospy"/>

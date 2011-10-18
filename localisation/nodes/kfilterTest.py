@@ -27,50 +27,34 @@ def publishState():
     #Chuck mean and covar into state message and publish
     pub.publish(State(Header(), mean[0, 0], mean[1, 0], mean[2, 0], covar[0, 0], covar[1, 1], covar[2, 2]))
 
-def actionUpdate(move):
+def actionUpdate(dx, dy, dt):
     global mean
     global covar
 
     #Set up necessary matrices
-    F = array([[1, 0, -move.fwd * sin(mean[2, 0])],
-               [0, 1, move.fwd * cos(mean[2, 0])],
+    F = array([[1, 0, 0],
+               [0, 1, 0],
                [0, 0, 1]])
 
     print "F = " + str(F)
 
-    #B = array([[cos(theta), 0],
-    #           [sin(theta), 0],
-    #           [0, 1]])
-
-    R = array([[cos(mean[2, 0]), -sin(mean[2, 0]), 0],
-               [sin(mean[2, 0]), cos(mean[2, 0]), 0],
-               [0, 0, 1]])
-
-    print "R = " + str(R)
-
-    E = array([[(0.1 + 0.01 * abs(move.fwd)) ** 2, 0, 0],
-               [0, (0.1 + 0.01 * abs(move.fwd)) ** 2, 0],
-               [0, 0, (5 * 180 / pi + 0.1 * abs(move.phi)) ** 2]])
-
-    print "E = " + str(E)
-
-    Q = dot(dot(R, E), transpose(R))
+    Q = array([[(0.1 + 0.01 * abs(dx)) ** 2, 0, 0],
+               [0, (0.1 + 0.01 * abs(dy)) ** 2, 0],
+               [0, 0, (5 * 180 / pi + 0.05 * abs(dt)) ** 2]])
 
     print "Q = " + str(Q)
 
-    #Chuck action into matrix too
-    u = array([[move.fwd, move.phi]])
-
-    print "u = " + str(u)
-
     #Plug into formulae to get new mean and covariance
-    mean = array([[mean[0,0] + move.fwd * cos(mean[2, 0])], [mean[1,0] + move.fwd * sin(mean[2, 0])], [mean[2,0] + move.phi]])
+    mean = array([[mean[0,0] + dx], [mean[1,0] + dy], [mean[2,0] + dt]])
 
     print "mean = " + str(mean)
 
     covar = dot(dot(F, covar), transpose(F)) + Q
 
     print "covar = " + str(covar)
+
+    #Chuck mean and covar into state message and publish
+    publishState()
 
 def observationUpdate(data):
     global mean
@@ -152,19 +136,6 @@ msg = Beacons(Header(), 2, [b0, b2])
 for i in range(0,50):
     observationUpdate(msg)
 
-#Move 1 metre forwards from where it was positioned above
-#msg = Move(Header(), 1.0, 0)
-#actionUpdate(msg)
+#
+actionUpdate(1, 1, 0)
 
-#Move 2 metres backwards from where it was positioned above
-msg = Move(Header(), -2.0, 0)
-actionUpdate(msg)
-
-#Originally at (0,0) facing pi/2 (90 degrees to the left) then do 2 metres backwards
-#b0 = Beacon(0, 0.0, 0.0, 17 ** 0.5, atan2(1, 4))
-#b1 = Beacon(1, 0.0, 0.0, 1, atan2(1, 0))
-#b2 = Beacon(2, 0.0, 0.0, 13 ** 0.5, atan2(-3, 2))
-#msg = Beacons(Header(), 3, [b0, b1, b2])
-
-#for i in range(0,50):
-#    observationUpdate(msg)

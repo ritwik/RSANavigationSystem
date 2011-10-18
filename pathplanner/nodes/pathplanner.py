@@ -34,6 +34,8 @@ class Coordinate:
     def __init__(self, x, y):
         self.x = x
         self.y = y
+    def __repr__(self):
+        return "(" + str(self.x) + "," + str(self.y) + ")"
 
 def newTimesAndHeadings(fromNode, toCoordinate):
     dy = fromNode.y - toCoordinate.y
@@ -123,16 +125,22 @@ def chooseBestPath():
     pathNodes.append(PathNode(bestPath.x, bestPath.y, bestPath.heading))
 
     print "The best path is: ", pathNodes
-    #pub.publish(new Path(Header(), pathNodes))
 
-if __name__ == "__main__":
-    #Open file, get nodes
-    c1 = Coordinate(1,2)
-    c2 = Coordinate(2,1)
-    c3 = Coordinate(3,3)
+    return pathNodes
+
+def planPath(state):
+    points = []
+    f = open('points', 'r') #In our starting script we will want to copy given points file to this points file
+    for i in range(0, 5):
+        line = f.readline()
+        splitLine = line.split(' ')
+        points.append(Coordinate(float(splitLine[0]) / 100.0, float(splitLine[1]) / 100.0))
+    print points
 
     print "Finding all paths"
-    findPath(Node(0, 0, 0, [c1,c2,c3], [], 0.0))
+    findPath(Node(state.x, state.y, state.theta, points, [], 0.0))
 
     print "Choosing best path"
-    chooseBestPath()
+    bestPath = chooseBestPath()
+
+    return bestPath

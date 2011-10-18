@@ -4,10 +4,15 @@ import rospy
 
 import math
 
+import pathplanner
+
 from std_msgs.msg import String
 from geometry_msgs.msg import Twist
 from localisation.msg import State
 from pathplanner.msg import Path, PathNode
+
+import sys
+import time
 
 #Need a limit so the robot stops trying to get closer (0.1m and 5 degrees) feel free to change
 LIMIT = 0.1
@@ -21,76 +26,112 @@ SLOW_LIMIT = 0.5
 ANGULAR_SLOW_LIMIT = math.pi / 4
 
 state = None
+settings = None
 
-def callbackPath(data):
-    path = data
-	
-    for node in path.nodes:
-        Drive(node)
-
-        #Wait for keypress
-        tty.setraw(sys.stdin.fileno())
-        select.select([sys.stdin], [], [], 0)
-        key = sys.stdin.read(1)
-        if (key == '\x03'):
-            break
-        termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)
+pubTwist = None
 
 def callbackState(data):
     global state
     state = data
 
-def control():
-    #Setting for input for keypress ability
-    settings = termios.tcgetattr(sys.stdin)
-	
-    rospy.Subscriber("path", Path, callbackPath)
-    rospy.Subscriber("state", State, callbackState)
-    pubTwist = rospy.Publisher('cmd_vel', Twist)
-    rospy.init_node('control')
-	
-    rospy.spin()
-	
-def Drive(node)
-    while (state == None):
-        print "Does not have state yet"
-    currState = state
+def run():
+    print "Waiting for startup keypress"
+    line = sys.stdin.readline()
 
-    #Finding the distance to the next point
-    distance = math.sqrt((currState.x - node.x) ** 2 + (currState.y - node.y) ** 2)
-	 
-    if distance < LIMIT
-        return
+    #Start by spinning around to determine where you are
+    spinAround()
 
-    #HANDLE ROTATION
-    #Finding the turn needed
-    difference = node.heading - currState.theta
-    while difference > math.pi
-        difference -= 2*math.pi
-    while difference < -math.pi
-        difference += 2*math.pi
-	
+    plan = pathplanner.planPath(state)
+    for node in plan.nodes:
+        drive(node)
+
+        print "Waiting for next point keypress"
+        sys.stdin.readline()
+
+
+def spinAround():
+    global state
+
     #Setting the actual twist to send to the robot0
     twist = Twist()
     twist.linear.x = 0; twist.linear.y = 0; twist.linear.z = 0
-    twist.angular.x = 0; twist.angular.y = 0; twist.angular.z = cmp(number,0) * TOP_SPEED
+    twist.angular.x = 0; twist.angular.y = 0; twist.angular.z = 0
 
     #Set up a zero twist to go between the actual twists
     zero = Twist()
     zero.linear.x = 0; zero.linear.y = 0; zero.linear.z = 0
     zero.angular.x = 0; zero.angular.y = 0; zero.angular.z = 0
 
-    #Motion updates are going to be based on odometry instead
-    #Then using our observations, we detect when we're in the correct state and stop
-        #But it's not exactly stop
-        #It's more like, as you get closer, slow down
+    #We want to turn all the way around
+    difference = 2 * math.pi
+
+	#The initial turn is done without any linear movement
+    pubTwist.publish(zero)
+    while abs(difference) > ANGULAR_LIMIT: #and (currState.xVar > XYVAR_THRESHOLD or currState.yVar > XYVAR_THRESHOLD or currState.theta > THETA_THRESHOLD):
+        #Once it reaches below a certain angle it slows at a ratio of the remaining angle over the limit
+        if abs(difference) < ANGULAR_SLOW_LIMIT:
+            twist.angular.z = cmp(difference,0) * TOP_SPEED * (difference / ANGULAR_SLOW_LIMIT)
+	        
+        #Publish the twist and wait a little to recalculate (not sure how long this should be for)
+        pubTwist.publish(twist)
+        time.sleep(0.1)
+        
+        #Checks the new difference between current and desired angles
+        currState = state
+        difference = difference - twist.angular.z 
+        while difference > math.pi:
+            difference -= 2 * math.pi
+        while difference < -math.pi:
+            difference += 2 * math.pi
+    	
+    pubTwist.publish(zero)
+
+def control():
+    global pubTwist
+
+    rospy.init_node('control')
+    pubTwist = rospy.Publisher('cmd_vel', Twist)
+    rospy.Subscriber("State", State, callbackState)
+
+    run()
+
+    rospy.spin()
 	
+def drive(node):
+    global state
+
+    currState = state
+
+    #Finding the distance to the next point
+    distance = math.sqrt((currState.x - node.x) ** 2 + (currState.y - node.y) ** 2)
+	 
+    if distance < LIMIT:
+        return
+
+    #HANDLE ROTATION
+    #Finding the turn needed
+    difference = node.heading - currState.theta
+    while difference > math.pi:
+        difference -= 2 * math.pi
+    while difference < -math.pi:
+        difference += 2 * math.pi
+	
+    #Setting the actual twist to send to the robot0
+    twist = Twist()
+    twist.linear.x = 0; twist.linear.y = 0; twist.linear.z = 0
+    twist.angular.x = 0; twist.angular.y = 0; twist.angular.z = 0 
+
+    #Set up a zero twist to go between the actual twists
+    zero = Twist()
+    zero.linear.x = 0; zero.linear.y = 0; zero.linear.z = 0
+    zero.angular.x = 0; zero.angular.y = 0; zero.angular.z = 0
+
 	#The initial turn is done without any linear movement
     pubTwist.publish(zero)
     while abs(difference) > ANGULAR_LIMIT:
         #Once it reaches below a certain angle it slows at a ratio of the remaining angle over the limit
-        if abs(difference) < ANGULAR_SLOW_LIMIT
-            twist.angular.z = cmp(number,0) * TOP_SPEED * (difference / ANGULAR_SLOW_LIMIT)
+        if abs(difference) < ANGULAR_SLOW_LIMIT:
+            twist.angular.z = cmp(difference,0) * TOP_SPEED * (difference / ANGULAR_SLOW_LIMIT)
 	        
         #Publish the twist and wait a little to recalculate (not sure how long this should be for)
         pubTwist.publish(twist)
@@ -99,15 +140,15 @@ def Drive(node)
         #Checks the new difference between current and desired angles
         currState = state
         difference = node.heading - currState.theta
-        while difference > math.pi
-            difference -= 2*math.pi
-        while difference < -math.pi
-            difference += 2*math.pi
+        while difference > math.pi:
+            difference -= 2 * math.pi
+        while difference < -math.pi:
+            difference += 2 * math.pi
     	
     pubTwist.publish(zero)
 	
     #HANDLE FORWARDS MOTION
-    while distance > LIMIT
+    while distance > LIMIT:
         #Get the new position
         currState = state
 	
@@ -120,19 +161,19 @@ def Drive(node)
         difference = changeAngle(difference, node.forward)
 		
         #Slow if within a certain limit of goal
-        if distance < SLOW_LIMIT
+        if distance < SLOW_LIMIT:
             speed = TOP_SPEED * (difference / SLOW_LIMIT)
-        else
+        else:
             speed = TOP_SPEED
 		
         #To make the robot go backwards
-        if !node.forward
+        if not node.forward:
             speed = -speed
 		
         #Slow if within a certain limit
-        if difference < ANGULAR_SLOW_LIMIT
+        if difference < ANGULAR_SLOW_LIMIT:
             angularSpeed = TOP_SPEED * (difference / ANGULAR_SLOW_LIMIT)
-        else
+        else:
             angularSpeed = TOP_SPEED
 
         twist.angular.z = angularSpeed
@@ -144,19 +185,19 @@ def Drive(node)
 
     pubTwist.publish(zero)
 	
-def changeAngle(angle, forward)
+def changeAngle(angle, forward):
 	
     #Check difference is too large and readjusts value(i.e. goes over the bound between pi and -pi)
-    while angle > math.pi
+    while angle > math.pi:
         angle = angle - 2*math.pi
-    while angle < -math.pi
+    while angle < -math.pi:
         angle = angle + 2*math.pi
 	
     #Determine whether robot needs to go forwards or backwards and then depending on that which way it needs to turn
-    if !forward
-        if angle < 0
+    if not forward:
+        if angle < 0:
             angle = math.pi + angle
-        else
+        else:
             angle = math.pi - angle
     return angle
 	

@@ -12,12 +12,6 @@ from std_msgs.msg import Header
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseWithCovariance, Pose, Point, Quaternion
 
-from tf.transformations import euler_from_quaternion
-
-#Actual values
-BX = [-1.0, -1.0, 3.0]
-BY = [2.0, -2.0, 0.0]
-
 pub = rospy.Publisher('State', State)
 
 #x, y, theta
@@ -38,7 +32,7 @@ def actionUpdate(pose):
     global mean
     global covar
 
-    if prevPose = None:
+    if prevPose == None:
         prevPose = pose
         return
 
@@ -46,8 +40,7 @@ def actionUpdate(pose):
     dx = pose.pose.pose.position.x - prevPose.pose.pose.position.x
     dy = pose.pose.pose.position.x - prevPose.pose.pose.position.y
     #Use the http://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles, conversion, only 1 is non-zero
-    dt = atan2((2 * pose.pose.pose.orientation.z * pose.pose.pose.orientation.w), (1 - 2 * (pose.pose.pose.orientation.z))) - 
-         atan2((2 * prevPose.prevPose.prevPose.orientation.z * prevPose.prevPose.prevPose.orientation.w), (1 - 2 * (prevPose.prevPose.prevPose.orientation.z)))
+    dt = atan2((2 * pose.pose.pose.orientation.z * pose.pose.pose.orientation.w), (1 - 2 * (pose.pose.pose.orientation.z))) - atan2((2 * prevPose.prevPose.prevPose.orientation.z * prevPose.prevPose.prevPose.orientation.w), (1 - 2 * (prevPose.prevPose.prevPose.orientation.z)))
 
     #Set up necessary matrices
     F = array([[1, 0, 0],
@@ -82,8 +75,8 @@ def observationUpdate(data):
         x = mean[0, 0]
         y = mean[1, 0]
 
-        dx = BX[b.ID] - x
-        dy = BY[b.ID] - y
+        dx = b.x - x
+        dy = b.y - y
 
         print "Dx = " + str(dx)
         print "Dy = " + str(dy)
