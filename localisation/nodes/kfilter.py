@@ -7,7 +7,6 @@ from math import *
 
 from localisation.msg import State
 from beaconfinder.msg import Beacons
-from control.msg import Move
 from std_msgs.msg import Header
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseWithCovariance, Pose, Point, Quaternion
