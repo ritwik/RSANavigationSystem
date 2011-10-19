@@ -7,7 +7,6 @@ from math import *
 
 from localisation.msg import State
 from beaconfinder.msg import Beacons, Beacon
-from control.msg import Move
 from std_msgs.msg import Header
 
 #Actual values
@@ -57,6 +56,72 @@ def actionUpdate(dx, dy, dt):
     publishState()
 
 def observationUpdate(data):
+    global mean
+    global covar
+
+    for b in data.beacon:
+        x = mean[0, 0]
+        y = mean[1, 0]
+
+        dx = b.x - x
+        dy = b.y - y
+
+        print "Dx = " + str(dx)
+        print "Dy = " + str(dy)
+
+        #Set up necessary matrices
+        H = array([[0, 0, 0],
+                   [-dx / sqrt(dx ** 2 + dy ** 2), -dy / sqrt(dx ** 2 + dy ** 2), 0],
+                   [dy / (dx ** 2 + dy ** 2), -dx / (dx ** 2 + dy ** 2), -1]])
+
+        print "H = " + str(H)
+
+        Hx = array([[0], [sqrt(dx ** 2 + dy ** 2)], [atan2(dy, dx) - mean[2, 0]]])
+
+        print "Hx = " + str(Hx)
+
+        R = array([[1, 1, 1],
+                   [0, 0.02 + 0.01 * (dx ** 2 + dy ** 2), 0],
+                   [0, 0, 0.1]]) 
+
+        print "R = " + str(R)
+
+        #Chuck beacon observation into matrix
+        z = array([[0], [b.distance], [b.angle]])
+
+        print "z = " + str(z)
+        print b.angle * 180 / pi
+
+        #Plug into formulae to get new mean and covariance
+        y = z - Hx #dot(H, mean)
+        while y[2,0] >= pi:
+            y[2,0] = y[2,0] - 2 * pi
+        while y[2,0] < -pi:
+            y[2,0] = y[2,0] + 2 * pi
+
+        print "y = " + str(y)
+
+        S = dot(dot(H, covar), transpose(H)) + R
+    
+        print "S = " + str(S)
+
+        K = dot(dot(covar, transpose(H)), linalg.inv(S))
+
+        print "K = " + str(K)
+
+        mean = mean + dot(K, y)
+
+        print "mean = " + str(mean)
+        while mean[2,0] >= pi:
+            mean[2,0] = mean[2,0] - 2 * pi
+        while mean[2,0] < -pi:
+            mean[2,0] = mean[2,0] + 2 * pi
+
+        covar = dot((eye(3) - dot(K, H)), covar)
+
+        print "covar = " + str(covar)
+
+def oldObservationUpdate(data):
     global mean
     global covar
 
@@ -123,8 +188,8 @@ def observationUpdate(data):
         print "covar = " + str(covar)
 
 #At (0,0) facing pi (backwards)
-b0 = Beacon(0, 0.0, 0.0, 5 ** 0.5, atan2(-2, 1))
-b2 = Beacon(1, 0.0, 0.0, 5 ** 0.5, atan2(2, 1))
+b0 = Beacon(0, -1.0, 2.0, 5 ** 0.5, atan2(-2, 1))
+b2 = Beacon(1, -1.0, -2.0, 5 ** 0.5, atan2(2, 1))
 msg = Beacons(Header(), 2, [b0, b2])
 
 #At (0,0) facing pi/2 (90 degrees to the left)
@@ -134,8 +199,8 @@ msg = Beacons(Header(), 2, [b0, b2])
 #msg = Beacons(Header(), 3, [b0, b1, b2])
 
 for i in range(0,50):
-    observationUpdate(msg)
+    observationUpdate(msg)    
 
 #
-actionUpdate(1, 1, 0)
+#actionUpdate(1, 1, 0)
 
