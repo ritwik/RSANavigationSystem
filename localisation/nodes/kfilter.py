@@ -30,16 +30,17 @@ def publishState():
 def actionUpdate(pose):
     global mean
     global covar
+    global prevPose
 
     if prevPose == None:
         prevPose = pose
         return
 
     #Calculate the change in pose, i.e. the action
-    dx = pose.pose.pose.position.x - prevPose.pose.pose.position.x
-    dy = pose.pose.pose.position.x - prevPose.pose.pose.position.y
+    dx = prevPose.pose.pose.position.x - pose.pose.pose.position.x
+    dy = prevPose.pose.pose.position.y - pose.pose.pose.position.y
     #Use the http://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles, conversion, only 1 is non-zero
-    dt = atan2((2 * pose.pose.pose.orientation.z * pose.pose.pose.orientation.w), (1 - 2 * (pose.pose.pose.orientation.z))) - atan2((2 * prevPose.prevPose.prevPose.orientation.z * prevPose.prevPose.prevPose.orientation.w), (1 - 2 * (prevPose.prevPose.prevPose.orientation.z)))
+    dt = atan2((2 * pose.pose.pose.orientation.z * pose.pose.pose.orientation.w), (1 - 2 * (pose.pose.pose.orientation.z))) - atan2((2 * prevPose.pose.pose.orientation.z * prevPose.pose.pose.orientation.w), (1 - 2 * (prevPose.pose.pose.orientation.z)))
 
     #Set up necessary matrices
     F = array([[1, 0, 0],
@@ -65,6 +66,8 @@ def actionUpdate(pose):
 
     #Chuck mean and covar into state message and publish
     publishState()
+
+    prevPose = pose
     
 def observationUpdate(data):
     global mean
@@ -139,7 +142,8 @@ def kfilter():
     pub = rospy.Publisher('State', State)
     rospy.init_node('localisation', anonymous=True)
     rospy.Subscriber('BeaconScan', Beacons, observationUpdate)
-    rospy.Subscriber('Pose', PoseWithCovariance, actionUpdate)
+    #rospy.Subscriber('Pose', PoseWithCovariance, actionUpdate)
+    rospy.Subscriber('odom', Odometry, actionUpdate)
     rospy.spin()
 
 if __name__ == '__main__':
