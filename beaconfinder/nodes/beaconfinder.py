@@ -27,7 +27,7 @@ pub = None
 realBeacons = [[0,-1,2,52],[1,-1,-2,138],[2,3,0,223]]
 
 def getCircleFrom(points):
-	((x1,y1),(x2,y2),(x3,y3)) = points
+	((x1,y1,d1),(x2,y2,d2),(x3,y3,d3)) = points
 	#print "x1 = " + str(x1) + " y1 = " + str(y1)
 	#print "x2 = " + str(x2) + " y2 = " + str(y2)
 	#print "x3 = " + str(x3) + " y3 = " + str(y3)
@@ -44,7 +44,7 @@ def getCircleFrom(points):
 	return [xc,yc,r]
 	
 def getErrorFromCircle(point, circle):
-	[x,y] = point
+	[x,y,d] = point
 	[xc,yc,r] = circle
 	return (math.sqrt((y-yc)**2 + (x-xc)**2) - r)
 
@@ -56,7 +56,10 @@ def getPillarFrom(potentialPoints,k,t,d):
 	bestCircle = []
 	bestConsensus_set = []
 	bestError = ERROR_THRESHOLD
-	
+	if (len(potentialPoints)>=3):
+		centrePoint = potentialPoints[len(potentialPoints)/2 + 1]
+		if (centrePoint[2] > potentialPoints[0][2]) or (centrePoint[2] > potentialPoints[len(potentialPoints)-1][2]):
+			return [0,0,0]
 	while iterations < k :
 		possibleInliers = random.sample(potentialPoints, 3)
 		possibleCircle = getCircleFrom(possibleInliers)
@@ -123,7 +126,7 @@ def generateBeaconList(pillars):
 			continue
 		beaconID = beaconsForID[0][0] 
 		if len(beaconsForID) == 1:
-			beacons.append(Beacon(beaconID,realBeacons[beaconID][0],realBeacons[beaconID][1],beaconsForID[0][2],beaconsForID[0][3]))
+			beacons.append(Beacon(beaconID,realBeacons[beaconID][1],realBeacons[beaconID][2],beaconsForID[0][2],beaconsForID[0][3]))
 			continue
 		mostAccBeacon = beaconsForID[0]
 		mostAccBeaconRadius = abs(realBeacons[beaconID][2] - mostAccBeacon[1]) #the radius diff of the first beacon from the actual beacon radius
@@ -132,7 +135,7 @@ def generateBeaconList(pillars):
 				mostAccBeaconRadius == abs(realBeacons[beaconID][2] - possibleBeacon[1])
 				mostAccBeacon = possibleBeacon
 		print "for beacon",beaconID,"most likely one is",possibleBeacon
-		beacons.append(Beacon(beaconID,realBeacons[beaconID][0],realBeacons[beaconID][1],mostAccBeacon[2],mostAccBeacon[3]))
+		beacons.append(Beacon(beaconID,realBeacons[beaconID][1],realBeacons[beaconID][2],mostAccBeacon[2],mostAccBeacon[3]))
 
 	return beacons
 		
@@ -155,7 +158,7 @@ def callback(data):
 				if (len(currentPillar) > 0):
 					potentialPillars.append(currentPillar)
 					currentPillar = []
-			currentPillar.append([pointx,pointy])
+			currentPillar.append([pointx,pointy,distance])
 		else:
 			if (len(currentPillar) > 0):
 				potentialPillars.append(currentPillar)
