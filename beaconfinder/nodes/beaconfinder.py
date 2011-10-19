@@ -12,7 +12,7 @@ import random
 #All these constants are in mm where they refer to a distance
 
 #This sets the maximum distance of a scan point to consider
-DISTANCE_THRESHOLD = 5000 
+DISTANCE_THRESHOLD = 4500 
 
 #This is the distance difference between 1 point and the next on a scan that is considered an 'edge', i.e. new beacon
 BEACON_JUMP_THRESHOLD = 75
@@ -21,7 +21,7 @@ BEACON_JUMP_THRESHOLD = 75
 BEACON_MATCH_THRESHOLD = 30
 
 #The max acceptable error from a consensus set to it's predicted circle. This lets us ignore walls. Smaller values = only accept more distinct circles
-ERROR_THRESHOLD = 100
+ERROR_THRESHOLD = 75
 pub = None
 
 realBeacons = [[0,-1,2,52],[1,-1,-2,138],[2,3,0,223]]
@@ -101,6 +101,7 @@ def generateBeaconList(pillars):
 	*might change this later to actually compare to real beacon sizes and estimate which one each pillar is*
 	'''
 	beacons = []
+	matchedBeacons= [[],[],[]]
 	sortedPillars =  sorted(pillars, key=lambda pillar: pillar[2])
 	for pillar in sortedPillars:
 		[x,y,r] = pillar
@@ -110,10 +111,28 @@ def generateBeaconList(pillars):
 			[bid,bx,by,br] = realBeacon
 			if abs(br - r) < BEACON_MATCH_THRESHOLD:
 				print "pillar: ",x,", ",y,", ",r," matches beacon ",bid," Keeping"
-				beacons.append(Beacon(bid,bx,by,distance/1000,angle))
+				
+				matchedBeacons[bid].append([bid,r,distance/1000,angle])
+				#beacons.append(Beacon(bid,bx,by,distance/1000,angle))
 				break
 			else:
 				print "pillar: ",x,", ",y,", ",r," does not match beacon ",bid
+
+	for beaconsForID in matchedBeacons:
+		if beaconsForID == []:
+			continue
+		beaconID = beaconsForID[0][0] 
+		if len(beaconsForID) == 1:
+			beacons.append(Beacon(beaconID,realBeacons[beaconID][0],realBeacons[beaconID][1],beaconsForID[0][2],beaconsForID[0][3]))
+			continue
+		mostAccBeacon = beaconsForID[0]
+		mostAccBeaconRadius = abs(realBeacons[beaconID][2] - mostAccBeacon[1]) #the radius diff of the first beacon from the actual beacon radius
+		for possibleBeacon in beaconsForID:    
+			if abs(realBeacons[beaconID][2] - possibleBeacon[1]) < mostAccBeaconRadius:
+				mostAccBeaconRadius == abs(realBeacons[beaconID][2] - possibleBeacon[1])
+				mostAccBeacon = possibleBeacon
+		print "for beacon",beaconID,"most likely one is",possibleBeacon
+		beacons.append(Beacon(beaconID,realBeacons[beaconID][0],realBeacons[beaconID][1],mostAccBeacon[2],mostAccBeacon[3]))
 
 	return beacons
 		
@@ -163,7 +182,8 @@ def callback(data):
 	#[x,y,r] = getCircleFrom([-1,0],[0,1],[1,0])
 	#rospy.loginfo("Circle = %lf, %lf, %lf",x,y,r)
 	global pub
-	pub.publish(Beacons(Header(),len(beacons),beacons))
+	if not beacons == []:
+		pub.publish(Beacons(Header(),len(beacons),beacons))
 	
 
 def beaconfinder():
