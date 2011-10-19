@@ -19,6 +19,7 @@ ANGULAR_LIMIT = (5 / 180) * math.pi
 
 #This is the top speed of the robot
 TOP_SPEED = 0.5
+TOP_ANGULAR_SPEED = 1
 
 #This is the distance where the robot begins to slow (0.5m and 45 degrees) they may be wrong, feel free to change them
 SLOW_LIMIT = 0.5
@@ -116,7 +117,7 @@ def drive(node):
         print "difference is " + str(difference) + " node.heading is " + str(node.heading) + " currState.theta " + str(currState.theta) 
         #Once it reaches below a certain angle it slows at a ratio of the remaining angle over the limit
         if abs(difference) < ANGULAR_SLOW_LIMIT:
-            twist.angular.z = cmp(difference,0) * TOP_SPEED * (difference / ANGULAR_SLOW_LIMIT)
+            twist.angular.z = cmp(difference,0) * TOP_ANGULAR_SPEED * (difference / ANGULAR_SLOW_LIMIT)
 	    print "angular speed is " + str(twist.angular.z)
 	    
         #Publish the twist and wait a little to recalculate (not sure how long this should be for)
@@ -159,9 +160,9 @@ def drive(node):
 		
         #Slow if within a certain limit
         if difference < ANGULAR_SLOW_LIMIT:
-            angularSpeed = TOP_SPEED * (difference / ANGULAR_SLOW_LIMIT)
+            angularSpeed = TOP_ANGULAR_SPEED * (difference / ANGULAR_SLOW_LIMIT)
         else:
-            angularSpeed = TOP_SPEED
+            angularSpeed = TOP_ANGULAR_SPEED
 
         twist.angular.z = angularSpeed
         twist.linear.x = speed
