@@ -11,14 +11,12 @@ def fwd(x):
   twist.angular.x = 0; twist.angular.y = 0; twist.angular.z = 0 # th*turn
   pub.publish(twist)
   time.sleep(1.5)
-  x = float(line.strip())
   twist = Twist()
   twist.linear.x = 0; twist.linear.y = 0; twist.linear.z = 0
   twist.angular.x = 0; twist.angular.y = 0; twist.angular.z = 0 # th*turn
   pub.publish(twist)
 
 def turn(x):
-  x = float(line.strip())
   twist = Twist()
   twist.linear.x = 0; twist.linear.y = 0; twist.linear.z = 0
   twist.angular.x = 0; twist.angular.y = 0; twist.angular.z = x # th*turn

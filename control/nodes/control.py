@@ -52,7 +52,7 @@ def spinAround():
     #Setting the actual twist to send to the robot0
     twist = Twist()
     twist.linear.x = 0; twist.linear.y = 0; twist.linear.z = 0
-    twist.angular.x = 0; twist.angular.y = 0; twist.angular.z = 0.5
+    twist.angular.x = 0; twist.angular.y = 0; twist.angular.z = 1
 
     #Set up a zero twist to go between the actual twists
     zero = Twist()
@@ -67,8 +67,9 @@ def spinAround():
         time.sleep(1.5)
         
     pubTwist.publish(zero)
+    print "we've finished spinning to localize"
 
-def control():
+def scontrol():
     global pubTwist
 
     rospy.init_node('control')
@@ -110,11 +111,14 @@ def drive(node):
 
 	#The initial turn is done without any linear movement
     pubTwist.publish(zero)
+    print "Let's spin around first... to get the angle right"
     while abs(difference) > ANGULAR_LIMIT:
+        print "difference is " + str(difference) + " node.heading is " + str(node.heading) + " currState.theta " + str(currState.theta) 
         #Once it reaches below a certain angle it slows at a ratio of the remaining angle over the limit
         if abs(difference) < ANGULAR_SLOW_LIMIT:
             twist.angular.z = cmp(difference,0) * TOP_SPEED * (difference / ANGULAR_SLOW_LIMIT)
-	        
+	    print "angular speed is " + str(twist.angular.z)
+	    
         #Publish the twist and wait a little to recalculate (not sure how long this should be for)
         pubTwist.publish(twist)
         time.sleep(0.1)
@@ -128,7 +132,8 @@ def drive(node):
             difference += 2 * math.pi
     	
     pubTwist.publish(zero)
-	
+    
+    print "Let's actually move there"
     #HANDLE FORWARDS MOTION
     while distance > LIMIT:
         #Get the new position
