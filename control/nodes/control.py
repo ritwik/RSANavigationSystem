@@ -9,7 +9,6 @@ import pathplanner
 from std_msgs.msg import String
 from geometry_msgs.msg import Twist
 from localisation.msg import State
-from pathplanner.msg import Path, PathNode
 
 import sys
 import time
@@ -42,7 +41,7 @@ def run():
     spinAround()
 
     plan = pathplanner.planPath(state)
-    for node in plan.nodes:
+    for node in plan.path:
         drive(node)
 
         print "Waiting for next point keypress"
@@ -50,40 +49,23 @@ def run():
 
 
 def spinAround():
-    global state
-
     #Setting the actual twist to send to the robot0
     twist = Twist()
     twist.linear.x = 0; twist.linear.y = 0; twist.linear.z = 0
-    twist.angular.x = 0; twist.angular.y = 0; twist.angular.z = 0
+    twist.angular.x = 0; twist.angular.y = 0; twist.angular.z = 0.5
 
     #Set up a zero twist to go between the actual twists
     zero = Twist()
     zero.linear.x = 0; zero.linear.y = 0; zero.linear.z = 0
     zero.angular.x = 0; zero.angular.y = 0; zero.angular.z = 0
 
-    #We want to turn all the way around
-    difference = 2 * math.pi
-
 	#The initial turn is done without any linear movement
     pubTwist.publish(zero)
-    while abs(difference) > ANGULAR_LIMIT: #and (currState.xVar > XYVAR_THRESHOLD or currState.yVar > XYVAR_THRESHOLD or currState.theta > THETA_THRESHOLD):
-        #Once it reaches below a certain angle it slows at a ratio of the remaining angle over the limit
-        if abs(difference) < ANGULAR_SLOW_LIMIT:
-            twist.angular.z = cmp(difference,0) * TOP_SPEED * (difference / ANGULAR_SLOW_LIMIT)
-	        
+    for i in range(0,4):
         #Publish the twist and wait a little to recalculate (not sure how long this should be for)
         pubTwist.publish(twist)
-        time.sleep(0.1)
+        time.sleep(1.5)
         
-        #Checks the new difference between current and desired angles
-        currState = state
-        difference = difference - twist.angular.z 
-        while difference > math.pi:
-            difference -= 2 * math.pi
-        while difference < -math.pi:
-            difference += 2 * math.pi
-    	
     pubTwist.publish(zero)
 
 def control():

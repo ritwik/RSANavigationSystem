@@ -1,11 +1,6 @@
 #!/usr/bin/python
-import roslib; roslib.load_manifest('pathplanner')
-import rospy
-
 import math
 from math import atan2,pi
-
-from pathplanner.msg import Path, PathNode
 
 #Algo
 #Construct a tree
@@ -22,13 +17,14 @@ pQueue = []
 fullPaths = []
 
 class Node:
-    def __init__(self, x, y, heading, remaining, path, time):
+    def __init__(self, x, y, heading, remaining, path, time, forward):
         self.x = x
         self.y = y
         self.heading = heading
         self.remaining = remaining
         self.path = path
         self.time = time
+        self.forward = forward
 
 class Coordinate:
     def __init__(self, x, y):
@@ -105,11 +101,11 @@ def findPath(startNode):
 
                 newPath = list(currNode.path)
                 newPath.append(currNode)
-                pQueue.append(Node(unexplored.x, unexplored.y, fwdHeading, [n for n in currNode.remaining if n != unexplored], newPath, fwdTime))
+                pQueue.append(Node(unexplored.x, unexplored.y, fwdHeading, [n for n in currNode.remaining if n != unexplored], newPath, fwdTime, False))
 
                 newPath = list(currNode.path)
                 newPath.append(currNode)
-                pQueue.append(Node(unexplored.x, unexplored.y, bwdHeading, [n for n in currNode.remaining if n != unexplored], newPath, bwdTime))
+                pQueue.append(Node(unexplored.x, unexplored.y, bwdHeading, [n for n in currNode.remaining if n != unexplored], newPath, bwdTime, True))
             
 def chooseBestPath():
     minTime = 0
@@ -119,18 +115,13 @@ def chooseBestPath():
             minTime = p.time
             bestPath = p
     
-    pathNodes = []
-    for n in bestPath.path:
-        pathNodes.append(PathNode(n.x, n.y, n.heading))
-    pathNodes.append(PathNode(bestPath.x, bestPath.y, bestPath.heading))
+    print "The best path is: ", bestPath
 
-    print "The best path is: ", pathNodes
-
-    return pathNodes
+    return bestPath
 
 def planPath(state):
     points = []
-    f = open('points', 'r') #In our starting script we will want to copy given points file to this points file
+    f = open('/home/akeswani/ros_workspace/RSANavigationSystem/control/nodes/points', 'r') #In our starting script we will want to copy given points file to this points file
     for i in range(0, 5):
         line = f.readline()
         splitLine = line.split(' ')
@@ -138,7 +129,7 @@ def planPath(state):
     print points
 
     print "Finding all paths"
-    findPath(Node(state.x, state.y, state.theta, points, [], 0.0))
+    findPath(Node(state.x, state.y, state.theta, points, [], 0.0, True))
 
     print "Choosing best path"
     bestPath = chooseBestPath()
