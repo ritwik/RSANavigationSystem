@@ -25,6 +25,7 @@ offset = [400,400]
 realBeacons = [[0,-1,2,0.052],[1,-1,-2,0.138],[2,3,0,0.223]]
 robotPose = [0,0,0]
 robotCovar = [1,1,1]
+robotCanvasItems = []
 def worldToCanvas(x,y):
 	'''Converts an xy pair to an xy on the canvas, assuming x & y are in pixels
 	'''
@@ -143,16 +144,28 @@ def updateBeacons(beacons):
 	print beacons
 
 def updateRobotLocation(state):
-	global robotPose,robotCovar
-	r = 0.2
+	global robotCanvasItems,robotPose,robotCovar
+	for item in robotCanvasItems:
+		canvas.delete(item)
+	r = mToPixels(0.2)
 	robotPose = [state.x,state.y,state.theta]
 	print "robot is at",robotPose 
 	robotCovar = [state.xCovar,state.yCovar,state.thetaCovar]
-	bbox = state.x+r,state.y+r,state.x-r,state.y-r
-	robotCanvasItems.append(canvas.create_oval(bbox,fill="red"))
+	#bbox = state.x+r,state.y+r,state.x-r,state.y-r
 	px = cos(state.theta)*0.2
 	py = sin(state.theta)*0.2
-	robotCanvasItems.append(canvas.create_line(mWorldToCanvas(state.x),mWorldToCanvas(state.y),mWorldToCanvas(px),mWorldToCanvas(py),fill="black"))
+	[px,py] = mWorldToCanvas(px,py)
+	[rx,ry] = mWorldToCanvas(state.x,state.y)
+	bbox = rx+r,ry+r,rx-r,ry-r
+	robotCanvasItems.append(canvas.create_oval(bbox,fill="red"))
+	robotCanvasItems.append(canvas.create_line(rx,ry,px,py,fill="black"))
+	
+	#draw the covariances
+	[covx,covy] = mWorldToCanvas(robotCovar[0],robotCovar[1])
+	covarbox = rx-covx,ry-covy,rx+covx,ry+covy
+	print "robot bbox",bbox
+	print "covar bbox",covarbox
+	robotCanvasItems.append(canvas.create_oval(covarbox,fill="",outline="green"))
 
 def RSAviewer():
 	#rsawindow = TkVisualisation()
@@ -161,11 +174,11 @@ def RSAviewer():
 	root=Tk()
 	root.protocol("WM_DELETE_WINDOW", root.quit())
 	frame = Frame(root)
-        frame.pack()
+	frame.pack()
 	canvas = Canvas(root, width = 800, height=800)
 	canvas.pack()
-        button = Button(frame, text="QUIT", fg="red", command=frame.quit)
-        button.pack(side=LEFT)
+	button = Button(frame, text="QUIT", fg="red", command=frame.quit)
+	button.pack(side=LEFT)
 	#canvas.create_line(0, offset[1], offset[0]*2, offset[1])
 	#canvas.create_line(offset[0], 0, offset[0],offset[1]*2)
 	drawGrid()
