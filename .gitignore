@@ -4,8 +4,9 @@ Makefile
 msg_gen
 srv_gen
 CMakeCache.txt
-CmakeFiles
+*/CMakeFiles/*
 build/*
+*/msg/_*
 
 #compiled source #
 *.com
