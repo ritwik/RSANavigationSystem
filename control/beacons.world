@@ -1,0 +1,88 @@
+define block model
+(
+  size [0.5 0.5 0.5]
+  gui_nose 0
+)
+
+define topurg laser
+(
+
+  range_max 30.0
+  fov 180
+  samples 180
+  # generic model properties
+  color "black"
+  size [ 1.000 0.050 0.100 ]
+)
+
+define erratic position
+(
+  #size [0.415 0.392 0.25]
+  
+  
+  size [0.500 0.500 0.500]
+  origin [-0.050 0 0 0]
+  gui_nose 1
+  drive "diff"
+  topurg(pose [ 0.050 0 0 0 ])
+)
+
+define circle model
+(
+  # sombre, sensible, artistic
+  color "gray30"
+
+  # most maps will need a bounding box
+  # boundary 1
+
+  gui_nose 0
+  gui_grid 0
+
+  gui_outline 0
+  gripper_return 0
+  fiducial_return 0
+  laser_return 1
+)
+
+# set the resolution of the underlying raytrace model in meters
+resolution 0.001
+
+interval_sim 100  # simulation timestep in milliseconds
+
+
+window
+( 
+  size [ 745.000 448.000 ] 
+
+  rotate [ 0 49.940 ]
+  scale 38.341 
+)
+
+# load an environment bitmap
+circle
+( 
+  name "beacon1"
+  bitmap "circle.png"
+  size [0.276 0.276 1.000]
+  pose [-1.000 -2.000 0 0 ]
+)
+
+circle
+( 
+  name "beacon0"
+  bitmap "circle.png"
+  size [0.104 0.104 1.000]
+  pose [-1.000 2.000 0 0 ]
+)
+
+circle
+( 
+  name "beacon2"
+  bitmap "circle.png"
+  size [0.446 0.446 1.000]
+  pose [3.000 0 0 0 ]
+)
+
+# throw in a robot
+erratic( pose [ 1.064 1.568 0 -25.909 ] name "era" color "blue")
+
