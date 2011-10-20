@@ -51,6 +51,8 @@ def run():
 
     plan = pathplanner.planPath(state)
 
+    plan.path.pop(0)
+
     for node in plan.path:
         print (node)
 
