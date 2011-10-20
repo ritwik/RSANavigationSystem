@@ -16,6 +16,7 @@ import time
 
 #Need a limit so the robot stops trying to get closer (0.1m and 5 degrees) feel free to change
 LIMIT = 0.1
+#ANGULAR_LIMIT = ((5 / 180) * math.pi) 
 ANGULAR_LIMIT = ((5.0 / 180) * math.pi) 
 
 TIME_LIMIT = 10
@@ -29,6 +30,8 @@ SLOW_LIMIT = 0.5
 ANGULAR_SLOW_LIMIT = math.pi / 4
 
 SLOW_CONSTANT = 0.1
+
+VAR_THRESH = 0.5 # maybe this is too high
 
 state = None
 settings = None
@@ -44,7 +47,7 @@ def run():
     line = sys.stdin.readline()
 
     #Start by spinning around to determine where you are
-    #spinAround()
+    spinAround()
 
     plan = pathplanner.planPath(state)
 
@@ -70,11 +73,33 @@ def spinAround():
 
 	#The initial turn is done without any linear movement
     pubTwist.publish(zero)
-    for i in range(0,4):
+    for i in range(0,16):
         #Publish the twist and wait a little to recalculate (not sure how long this should be for)
         pubTwist.publish(twist)
-        time.sleep(1.5)
+        time.sleep(0.5)
+        pubTwist.publish(zero)
         
+    pubTwist.publish(zero)
+    print "we've finished spinning to localize"
+    
+def lostSpinAround(node):
+    #Setting the actual twist to send to the robot
+    twist = Twist()
+    twist.linear.x = 0; twist.linear.y = 0; twist.linear.z = 0
+    twist.angular.x = 0; twist.angular.y = 0; twist.angular.z = 1
+
+    #Set up a zero twist to go between the actual twists
+    zero = Twist()
+    zero.linear.x = 0; zero.linear.y = 0; zero.linear.z = 0
+    zero.angular.x = 0; zero.angular.y = 0; zero.angular.z = 0
+    
+	#The initial turn is done without any linear movement
+    pubTwist.publish(zero)
+    while (state.xCovar > VAR_THRESH or state.yCovar > VAR_THRESH):
+        #Publish the twist and wait a little to recalculate (not sure how long this should be for)
+        pubTwist.publish(twist)
+    
+    drive(node)
     pubTwist.publish(zero)
     print "we've finished spinning to localize"
 
@@ -102,8 +127,12 @@ def drive(node):
     
     #HANDLE ROTATION
         #Recalculate heading to make sure it is correct if the robot is in au unexpected place
+    #SOMETHING IS WRONG!
     newNodeHeading = atan2(node.y - currState.y, node.x - currState.x)
     node.heading = changeAngle(newNodeHeading, node.forward)
+    print node.heading
+
+    #	sys.stdin.readline()
 
     #Finding the turn needed
     difference = node.heading - currState.theta
@@ -166,6 +195,16 @@ def drive(node):
             
         #Get the new position
         currState = state
+        
+        if (currState.xCovar > VAR_THRESH or currState.yCovar > VAR_THRESH):
+          print "We're a little lost about position"
+          lostSpinAround(node)
+          return
+        else:
+          if (currState.thetaCovar > 10.0/180*math.pi):
+            print "We're a little lost about the angle"
+            lostSpinAround(node)
+            return        
 	
         #Finding the distance to the next point
         distance = math.sqrt((currState.x - node.x) * (currState.x - node.x) + (currState.y - node.y) * (currState.y - node.y))
@@ -222,15 +261,16 @@ def changeAngle(angle, forward):
         if angle < 0:
             angle = math.pi + angle
         else:
-            angle = math.pi - angle
+            angle = angle - math.pi
+
     print forward
     print angle
 
     #Check difference is too large and readjusts value(i.e. goes over the bound between pi and -pi)
-    while angle > math.pi:
-        angle = angle - 2*math.pi
-    while angle < -math.pi:
-        angle = angle + 2*math.pi
+    while angle > math.pi: 
+        angle = angle - 2 * math.pi
+    while angle < -math.pi: 
+        angle = angle + 2 * math.pi
 	
     return angle
 	

@@ -9,7 +9,7 @@ from localisation.msg import State
 from beaconfinder.msg import Beacons
 from std_msgs.msg import Header
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import PoseWithCovariance, Pose, Point, Quaternion
+from geometry_msgs.msg import PoseWithCovariance, Pose, Point, Quaternion, Twist
 
 pub = rospy.Publisher('State', State)
 
@@ -70,6 +70,10 @@ def actionUpdate(pose):
 
     #Plug into formulae to get new mean and covariance
     mean = array([[mean[0,0] + dx], [mean[1,0] + dy], [mean[2,0] + dt]])
+    while mean[2,0] > pi:
+        mean[2,0] = mean[2,0] - 2 * pi
+    while mean[2,0] < -pi:
+        mean[2,0] = mean[2,0] + 2 * pi
 
     print "mean = " + str(mean)
 
@@ -108,8 +112,8 @@ def observationUpdate(data):
         print "Hx = " + str(Hx)
 
         R = array([[1, 1, 1],
-                   [0, 0.02 + 0.01 * (dx ** 2 + dy ** 2), 0],
-                   [0, 0, 0.1]]) 
+                   [0, (0.02 + 0.01 * (dx ** 2 + dy ** 2)) ** 2, 0],
+                   [0, 0, 0.1 ** 2]]) 
 
         print "R = " + str(R)
 
@@ -156,15 +160,16 @@ def kfilter():
     rospy.init_node('localisation', anonymous=True)
     rospy.Subscriber('BeaconScan', Beacons, observationUpdate)
     rospy.Subscriber('cmd_vel', Twist, forwardUpdate)
-    #rospy.Subscriber('Pose', PoseWithCovariance, actionUpdate)
-    rospy.Subscriber('odom', Odometry, actionUpdate)
+    #rospy.Subscriber('pose', PoseWithCovariance, actionUpdate)
+    rospy.Subscriber('pose', Odometry, actionUpdate)
+    #rospy.Subscriber('odom', Odometry, actionUpdate)
     rospy.spin()
 
 def forwardUpdate(data):
     global forward
     if (data.linear.x > 0):
         forward = 1
-    else
+    else:
         forward = -1
     if data.linear.x == 0:
         forward = 0

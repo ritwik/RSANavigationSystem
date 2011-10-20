@@ -37,7 +37,7 @@ class Coordinate:
     def __repr__(self):
         return "(" + str(self.x) + "," + str(self.y) + ")"
 
-def newTimesAndHeadings(fromNode, toCoordinate):
+def newTimeAndHeading(fromNode, toCoordinate):
     dy = fromNode.y - toCoordinate.y
     dx = fromNode.x - toCoordinate.x
 
@@ -88,9 +88,17 @@ def newTimesAndHeadings(fromNode, toCoordinate):
     while bwdHeading < -pi:
         bwdHeading = bwdHeading + 2 * pi
 
-    return time, heading, foward
+    headingToCentreAtDest = atan2((0 - toCoordinate.y), (0 - toCoordinate.x))
+    print "Going to ", toCoordinate.x, toCoordinate.y, "from ", fromNode.x, fromNode.y
+    print headingToCentreAtDest
+    print bwdHeading - headingToCentreAtDest
+    print newHeading - headingToCentreAtDest
 
-
+    if abs(bwdHeading - headingToCentreAtDest) < abs(newHeading - headingToCentreAtDest):
+        return bwdTime, bwdHeading, False
+    else:
+        return fwdTime, newHeading, True
+        
 def findPath(startNode):
     pQueue.append(startNode)
 
@@ -101,12 +109,12 @@ def findPath(startNode):
             fullPaths.append(currNode)
         else:
             for unexplored in currNode.remaining:
-                fwdTime, fwdHeading, bwdTime, bwdHeading = newTimesAndHeadings(currNode, unexplored)
-                print fwdTime, fwdHeading, bwdTime, bwdHeading
+                time, heading, forward = newTimeAndHeading(currNode, unexplored)
+                #print time, heading, forward
 
                 newPath = list(currNode.path)
                 newPath.append(currNode)
-                pQueue.append(Node(unexplored.x, unexplored.y, fwdHeading, [n for n in currNode.remaining if n != unexplored], newPath, fwdTime, True))
+                pQueue.append(Node(unexplored.x, unexplored.y, heading, [n for n in currNode.remaining if n != unexplored], newPath, time, forward))
 
                 #newPath = list(currNode.path)
                 #newPath.append(currNode)
