@@ -16,7 +16,7 @@ import time
 
 #Need a limit so the robot stops trying to get closer (0.1m and 5 degrees) feel free to change
 LIMIT = 0.1
-ANGULAR_LIMIT = ((5.0 / 180) * math.pi) 
+ANGULAR_LIMIT = ((2.5 / 180) * math.pi) 
 
 TIME_LIMIT = 10
 
@@ -102,8 +102,12 @@ def drive(node):
     
     #HANDLE ROTATION
         #Recalculate heading to make sure it is correct if the robot is in au unexpected place
+    #SOMETHING IS WRONG!
     newNodeHeading = atan2(node.y - currState.y, node.x - currState.x)
     node.heading = changeAngle(newNodeHeading, node.forward)
+    print node.heading
+
+    sys.stdin.readline()
 
     #Finding the turn needed
     difference = node.heading - currState.theta
@@ -222,15 +226,16 @@ def changeAngle(angle, forward):
         if angle < 0:
             angle = math.pi + angle
         else:
-            angle = math.pi - angle
+            angle = angle - math.pi
+
     print forward
     print angle
 
     #Check difference is too large and readjusts value(i.e. goes over the bound between pi and -pi)
-    while angle > math.pi:
-        angle = angle - 2*math.pi
-    while angle < -math.pi:
-        angle = angle + 2*math.pi
+    while angle > math.pi: 
+        angle = angle - 2 * math.pi
+    while angle < -math.pi: 
+        angle = angle + 2 * math.pi
 	
     return angle
 	

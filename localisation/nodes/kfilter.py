@@ -9,7 +9,7 @@ from localisation.msg import State
 from beaconfinder.msg import Beacons
 from std_msgs.msg import Header
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import PoseWithCovariance, Pose, Point, Quaternion
+from geometry_msgs.msg import PoseWithCovariance, Pose, Point, Quaternion, Twist
 
 pub = rospy.Publisher('State', State)
 
@@ -164,7 +164,7 @@ def forwardUpdate(data):
     global forward
     if (data.linear.x > 0):
         forward = 1
-    else
+    else:
         forward = -1
     if data.linear.x == 0:
         forward = 0
