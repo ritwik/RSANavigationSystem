@@ -9,7 +9,7 @@ define topurg laser
 
   range_max 30.0
   fov 180
-  samples 1081
+  samples 180
   # generic model properties
   color "black"
   size [ 1.000 0.050 0.100 ]
@@ -54,7 +54,7 @@ window
 ( 
   size [ 745.000 448.000 ] 
 
-  rotate [ 49.500 26.940 ]
+  rotate [ 0 49.940 ]
   scale 38.341 
 )
 
@@ -64,7 +64,7 @@ circle
   name "beacon1"
   bitmap "circle.png"
   size [0.276 0.276 1.000]
-  pose [-1.0 -2.0 0 0 ]
+  pose [-1.000 -2.000 0 0 ]
 )
 
 circle
@@ -72,7 +72,7 @@ circle
   name "beacon0"
   bitmap "circle.png"
   size [0.104 0.104 1.000]
-  pose [-1.0 2.0 0 0 ]
+  pose [-1.000 2.000 0 0 ]
 )
 
 circle
@@ -80,9 +80,9 @@ circle
   name "beacon2"
   bitmap "circle.png"
   size [0.446 0.446 1.000]
-  pose [3.0 0.0 0 0 ]
+  pose [3.000 0 0 0 ]
 )
 
 # throw in a robot
-erratic( pose [ -1.961 -2.615 0 136.466 ] name "era" color "blue")
+erratic( pose [ 1.064 1.568 0 -25.909 ] name "era" color "blue")
 

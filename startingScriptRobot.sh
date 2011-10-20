@@ -9,5 +9,5 @@ rosparam set sicklms/baud 38400
 
 #Using & for now, assuming they get killed when ssh is killed
 bash -c "rosrun sicktoolbox_wrapper sicklms" &
-#bash -c "rosrun p2os_driver p2os" &
+bash -c "rosrun p2os_driver p2os" &
 

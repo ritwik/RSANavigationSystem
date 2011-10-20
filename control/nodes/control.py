@@ -16,7 +16,8 @@ import time
 
 #Need a limit so the robot stops trying to get closer (0.1m and 5 degrees) feel free to change
 LIMIT = 0.1
-ANGULAR_LIMIT = ((2.5 / 180) * math.pi) 
+#ANGULAR_LIMIT = ((5 / 180) * math.pi) 
+ANGULAR_LIMIT = ((15.0 / 180) * math.pi) 
 
 TIME_LIMIT = 10
 
@@ -44,7 +45,7 @@ def run():
     line = sys.stdin.readline()
 
     #Start by spinning around to determine where you are
-    #spinAround()
+    spinAround()
 
     plan = pathplanner.planPath(state)
 
@@ -70,10 +71,12 @@ def spinAround():
 
 	#The initial turn is done without any linear movement
     pubTwist.publish(zero)
-    for i in range(0,4):
+    for i in range(0,8):
         #Publish the twist and wait a little to recalculate (not sure how long this should be for)
         pubTwist.publish(twist)
         time.sleep(1.5)
+
+        pubTwist.publish(zero)
         
     pubTwist.publish(zero)
     print "we've finished spinning to localize"
