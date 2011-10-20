@@ -20,6 +20,9 @@ covar = array([[25000.0, 0.0, 0.0], [0.0, 25000.0, 0.0], [0.0, 0.0, 25000.0]])
 #Old odometry
 prevPose = None;
 
+#Going forwards = 1, backwards = -1
+forward = 0
+
 def publishState():
     global pub
     global mean
@@ -37,10 +40,20 @@ def actionUpdate(pose):
         return
 
     #Calculate the change in pose, i.e. the action
-    dx = prevPose.pose.pose.position.x - pose.pose.pose.position.x
-    dy = prevPose.pose.pose.position.y - pose.pose.pose.position.y
+    rrdx = prevPose.pose.pose.position.x - pose.pose.pose.position.x
+    rrdy = prevPose.pose.pose.position.y - pose.pose.pose.position.y
+
+    # this is for stageros ! not sure if this works for the actual robot
+    dist = sqrt(rrdx ** 2 + rrdy ** 2)
+    dx = dist * cos(mean[2]) * forward
+    dy = dist * sin(mean[2]) * forward
+    
     #Use the http://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles, conversion, only 1 is non-zero
-    dt = atan2((2 * pose.pose.pose.orientation.z * pose.pose.pose.orientation.w), (1 - 2 * (pose.pose.pose.orientation.z))) - atan2((2 * prevPose.pose.pose.orientation.z * prevPose.pose.pose.orientation.w), (1 - 2 * (prevPose.pose.pose.orientation.z)))
+    dt = atan2((2 * pose.pose.pose.orientation.z * pose.pose.pose.orientation.w), (1 - 2 * (pose.pose.pose.orientation.z ** 2))) - atan2((2 * prevPose.pose.pose.orientation.z * prevPose.pose.pose.orientation.w), (1 - 2 * (prevPose.pose.pose.orientation.z ** 2)))
+    while dt > pi:
+        dt = dt - 2 * pi
+    while dt < -pi:
+        dt = dt + 2 * pi
 
     #Set up necessary matrices
     F = array([[1, 0, 0],
@@ -51,7 +64,7 @@ def actionUpdate(pose):
 
     Q = array([[(0.1 + 0.01 * abs(dx)) ** 2, 0, 0],
                [0, (0.1 + 0.01 * abs(dy)) ** 2, 0],
-               [0, 0, (5 * 180 / pi + 0.05 * abs(dt)) ** 2]])
+               [0, 0, (5 * pi / 180 + 0.05 * abs(dt)) ** 2]])
 
     print "Q = " + str(Q)
 
@@ -142,9 +155,19 @@ def kfilter():
     pub = rospy.Publisher('State', State)
     rospy.init_node('localisation', anonymous=True)
     rospy.Subscriber('BeaconScan', Beacons, observationUpdate)
+    rospy.Subscriber('cmd_vel', Twist, forwardUpdate)
     #rospy.Subscriber('Pose', PoseWithCovariance, actionUpdate)
     rospy.Subscriber('odom', Odometry, actionUpdate)
     rospy.spin()
+
+def forwardUpdate(data):
+    global forward
+    if (data.linear.x > 0):
+        forward = 1
+    else
+        forward = -1
+    if data.linear.x == 0:
+        forward = 0
 
 if __name__ == '__main__':
     kfilter()

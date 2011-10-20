@@ -26,6 +26,10 @@ class Node:
         self.time = time
         self.forward = forward
 
+    def __repr__(self):
+        return "[" + str(self.x) + ", " + str(self.y) + ", " + str(self.heading) + ", " + str(self.forward) + "]"
+    
+
 class Coordinate:
     def __init__(self, x, y):
         self.x = x
@@ -84,7 +88,8 @@ def newTimesAndHeadings(fromNode, toCoordinate):
     while bwdHeading < -pi:
         bwdHeading = bwdHeading + 2 * pi
 
-    return fwdTime, newHeading, bwdTime, bwdHeading
+    return time, heading, foward
+
 
 def findPath(startNode):
     pQueue.append(startNode)
@@ -101,11 +106,11 @@ def findPath(startNode):
 
                 newPath = list(currNode.path)
                 newPath.append(currNode)
-                pQueue.append(Node(unexplored.x, unexplored.y, fwdHeading, [n for n in currNode.remaining if n != unexplored], newPath, fwdTime, False))
+                pQueue.append(Node(unexplored.x, unexplored.y, fwdHeading, [n for n in currNode.remaining if n != unexplored], newPath, fwdTime, True))
 
-                newPath = list(currNode.path)
-                newPath.append(currNode)
-                pQueue.append(Node(unexplored.x, unexplored.y, bwdHeading, [n for n in currNode.remaining if n != unexplored], newPath, bwdTime, True))
+                #newPath = list(currNode.path)
+                #newPath.append(currNode)
+                #pQueue.append(Node(unexplored.x, unexplored.y, bwdHeading, [n for n in currNode.remaining if n != unexplored], newPath, bwdTime, False))
             
 def chooseBestPath():
     minTime = 0
@@ -115,7 +120,8 @@ def chooseBestPath():
             minTime = p.time
             bestPath = p
     
-    print "The best path is: ", bestPath
+    bestPath.path.append(bestPath)
+    print "The best path is: ", bestPath.path
 
     return bestPath
 

@@ -20,7 +20,7 @@ define erratic position
   #size [0.415 0.392 0.25]
   
   
-  size [1.000 1.000 0.500]
+  size [0.500 0.500 0.500]
   origin [-0.050 0 0 0]
   gui_nose 1
   drive "diff"

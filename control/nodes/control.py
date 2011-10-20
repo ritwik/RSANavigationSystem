@@ -16,7 +16,7 @@ import time
 
 #Need a limit so the robot stops trying to get closer (0.1m and 5 degrees) feel free to change
 LIMIT = 0.1
-ANGULAR_LIMIT = ((10.0 / 180) * math.pi) 
+ANGULAR_LIMIT = ((5.0 / 180) * math.pi) 
 
 TIME_LIMIT = 10
 
@@ -27,6 +27,8 @@ TOP_ANGULAR_SPEED = 1
 #This is the distance where the robot begins to slow (0.5m and 45 degrees) they may be wrong, feel free to change them
 SLOW_LIMIT = 0.5
 ANGULAR_SLOW_LIMIT = math.pi / 4
+
+SLOW_CONSTANT = 0.1
 
 state = None
 settings = None
@@ -42,21 +44,18 @@ def run():
     line = sys.stdin.readline()
 
     #Start by spinning around to determine where you are
-    spinAround()
+    #spinAround()
 
     plan = pathplanner.planPath(state)
 
     for node in plan.path:
         print (node)
-    print plan
 
     for node in plan.path:
+        print "Waiting for next point keypress:", node
+        sys.stdin.readline()
         drive(node)
         # plan = pathplanner.planPath(state)
-        print "Waiting for next point keypress"
-        sys.stdin.readline()
-        
-    drive(plan)
 
 def spinAround():
     #Setting the actual twist to send to the robot
@@ -102,33 +101,27 @@ def drive(node):
         return
     
     #HANDLE ROTATION
+        #Recalculate heading to make sure it is correct if the robot is in au unexpected place
+    newNodeHeading = atan2(node.y - currState.y, node.x - currState.x)
+    node.heading = changeAngle(newNodeHeading, node.forward)
+
     #Finding the turn needed
     difference = node.heading - currState.theta
     while difference > math.pi:
         difference -= 2 * math.pi
     while difference < -math.pi:
         difference += 2 * math.pi
-	
+
     #Setting the actual twist to send to the robot0
     twist = Twist()
     twist.linear.x = 0; twist.linear.y = 0; twist.linear.z = 0
-    twist.angular.x = 0; twist.angular.y = 0; twist.angular.z = TOP_ANGULAR_SPEED 
+    twist.angular.x = 0; twist.angular.y = 0; twist.angular.z = cmp(difference,0) * TOP_ANGULAR_SPEED 
 
     #Set up a zero twist to go between the actual twists
     zero = Twist()
     zero.linear.x = 0; zero.linear.y = 0; zero.linear.z = 0
     zero.angular.x = 0; zero.angular.y = 0; zero.angular.z = 0
 
-    #Recalculate heading to make sure it is correct if the robot is in au unexpected place
-    fwdTime, fwdHeading, bwdTime, bwdHeading = pathplanner.newTimesAndHeadings(currState, node)
-    
-    if fwdTime < bwdTime
-        node.heading = fwdHeading
-        node.foward = True
-    else
-        node.heading = bwdHeading
-        node.forward = False
-    
 	#The initial turn is done without any linear movement
     pubTwist.publish(zero)
     print "Let's spin around first... to get the angle right"
@@ -136,7 +129,7 @@ def drive(node):
         print "difference is " + str(difference) + " node.heading is " + str(node.heading) + " currState.theta " + str(currState.theta), str(ANGULAR_LIMIT), str(ANGULAR_SLOW_LIMIT) 
         #Once it reaches below a certain angle it slows at a ratio of the remaining angle over the limit
         if abs(difference) < ANGULAR_SLOW_LIMIT:
-            twist.angular.z = cmp(difference,0) * TOP_ANGULAR_SPEED * (difference / ANGULAR_SLOW_LIMIT) 
+            twist.angular.z = TOP_ANGULAR_SPEED * (difference / ANGULAR_SLOW_LIMIT) 
 	    
         print "angular speed is " + str(twist.angular.z)
 
@@ -150,11 +143,14 @@ def drive(node):
         difference = node.heading - currState.theta # you can calculate this 
 
         while difference > math.pi:
-            difference -= 2 * math.pi
+            difference = difference - 2 * math.pi
         while difference < -math.pi:
-            difference += 2 * math.pi
+            difference = difference + 2 * math.pi
     	
     pubTwist.publish(zero)
+
+    #Get the starting heading of the robot, 
+    startHeading = currState.theta
     
     print "Let's actually move there"
     print node
@@ -165,8 +161,8 @@ def drive(node):
         end = time.time()
         
         #This enforces a time limit
-        if end - start > TIME_LIMIT:
-            break
+        #if end - start > TIME_LIMIT:
+        #    break
             
         #Get the new position
         currState = state
@@ -176,17 +172,26 @@ def drive(node):
         print distance
 
         #Finding the turn needed
-        angle = atan2((currState.y-node.y),(currState.x-node.x))
+        angle = atan2((node.y - currState.y),(node.x - currState.x)) #atan2((currState.y-node.y),(currState.x-node.x))
+        angle = changeAngle(angle, node.forward)
         difference = angle - currState.theta
-        difference = changeAngle(difference, node.forward)
-		
+        while difference > math.pi:
+            difference = difference - 2*math.pi
+        while difference < -math.pi:
+            difference = difference + 2*math.pi
+        print "Difference:", difference
+
 		#This will mean that it has overshot and is turning around, which is stupid
-        if abs(difference) > math.pi:
+        overshootDifference = abs(startHeading - angle)
+        while overshootDifference > math.pi:
+            overshootDifference = overshootDifference - 2 * math.pi
+        print "Overshoot difference: ", overshootDifference
+        if abs(overshootDifference) > math.pi / 2:
 		    break
-		
+        
         #Slow if within a certain limit of goal
-        if distance < SLOW_LIMIT:
-            speed = TOP_SPEED * (difference / SLOW_LIMIT)
+        if abs(distance) < SLOW_LIMIT:
+            speed = TOP_SPEED * (distance / SLOW_LIMIT) + SLOW_CONSTANT
         else:
             speed = TOP_SPEED
 		
@@ -195,10 +200,10 @@ def drive(node):
             speed = -speed
 		
         #Slow if within a certain limit
-        if difference < ANGULAR_SLOW_LIMIT:
+        if abs(difference) < ANGULAR_SLOW_LIMIT:
             angularSpeed = TOP_ANGULAR_SPEED * (difference / ANGULAR_SLOW_LIMIT)
         else:
-            angularSpeed = TOP_ANGULAR_SPEED
+            angularSpeed = TOP_ANGULAR_SPEED * cmp(difference, 0)
 
         twist.angular.z = angularSpeed
         twist.linear.x = speed
@@ -210,19 +215,23 @@ def drive(node):
     pubTwist.publish(zero)
 	
 def changeAngle(angle, forward):
-	
+    #Determine whether robot needs to go forwards or backwards and then depending on that which way it needs to turn
+    print forward
+    print angle
+    if not forward:
+        if angle < 0:
+            angle = math.pi + angle
+        else:
+            angle = math.pi - angle
+    print forward
+    print angle
+
     #Check difference is too large and readjusts value(i.e. goes over the bound between pi and -pi)
     while angle > math.pi:
         angle = angle - 2*math.pi
     while angle < -math.pi:
         angle = angle + 2*math.pi
 	
-    #Determine whether robot needs to go forwards or backwards and then depending on that which way it needs to turn
-    if not forward:
-        if angle < 0:
-            angle = math.pi + angle
-        else:
-            angle = math.pi - angle
     return angle
 	
 if __name__ == '__main__':
