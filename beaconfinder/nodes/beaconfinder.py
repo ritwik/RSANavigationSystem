@@ -194,6 +194,7 @@ def beaconfinder():
 	pub = rospy.Publisher('BeaconScan', Beacons)
 	rospy.init_node('beaconfinder', anonymous=True)
 	rospy.Subscriber("scan", LaserScan, callback)
+	#rospy.Subscriber("base_scan", LaserScan, callback)
 	rospy.spin()
 
 if __name__ == '__main__':
