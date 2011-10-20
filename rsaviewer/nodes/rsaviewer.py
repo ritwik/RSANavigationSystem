@@ -127,7 +127,9 @@ def drawBeacons(data):
 		#bbox = offset[0]+beacon.x*100-r, offset[1]+beacon.y*100-r, offset[0]+beacon.x*100+r, offset[1]+beacon.y*100+r
 		pX =  cos(rHeading+beacon.angle)*beacon.distance
 		pY  = sin(rHeading+beacon.angle)*beacon.distance	
-		[xc,yc] = mWorldToCanvas(pX,pY)
+		#xc = mToPixels(pX)
+		#yc = -mToPixels(pY)
+		[xc,yc] = mWorldToCanvas(rx+pX,ry+pY)
 		#[xc,yc] = worldToCanvas(mToPixels(beacon.x),mToPixels(beacon.y))
 		bbox = xc-r, yc-r, xc+r, yc+r
 		newBeacon = canvas.create_oval(bbox, fill="",outline="red")
@@ -153,15 +155,19 @@ def updateRobotLocation(state):
 	robotCovar = [state.xCovar,state.yCovar,state.thetaCovar]
 	#bbox = state.x+r,state.y+r,state.x-r,state.y-r
 	px = cos(state.theta)*0.2
-	py = sin(state.theta)*0.2
-	[px,py] = mWorldToCanvas(px,py)
+	py = -sin(state.theta)*0.2
+	print "calculated px,py",px,py
+	px = mToPixels(px)
+	py = mToPixels(py)
 	[rx,ry] = mWorldToCanvas(state.x,state.y)
+	print "new px,py,rx,ry,rx+px,ry+py",px,py,rx,ry,rx+px,ry+py
 	bbox = rx+r,ry+r,rx-r,ry-r
 	robotCanvasItems.append(canvas.create_oval(bbox,fill="red"))
-	robotCanvasItems.append(canvas.create_line(rx,ry,px,py,fill="black"))
+	robotCanvasItems.append(canvas.create_line(rx,ry,rx+px,ry+py,fill="black"))
 	
 	#draw the covariances
-	[covx,covy] = mWorldToCanvas(robotCovar[0],robotCovar[1])
+	covx= mToPixels(robotCovar[0])
+	covy= -mToPixels(robotCovar[1])
 	covarbox = rx-covx,ry-covy,rx+covx,ry+covy
 	print "robot bbox",bbox
 	print "covar bbox",covarbox
