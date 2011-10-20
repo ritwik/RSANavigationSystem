@@ -16,59 +16,60 @@ from Tkinter import *
 seenBeacons = []
 drawnBeacons = []
 
-class TkVisualisation(threading.Thread):
-	def __init__(self):
-		threading.Thread.__init__(self)
-		self.start()
-	def callback(self):
-		self.root.quit()
-	def run(self):
-		self.root=Tk()
-		self.root.protocol("WM_DELETE_WINDOW", self.callback)
-		self.s = StringVar()
-		self.s.set('Foo')
-		l = Label(self.root,textvariable=self.s)
-		l.pack()
-		#w = Label(root, text="")
-		#w.pack()
-		frame = Frame(self.root)
-        	frame.pack()
-		canvas = Canvas(self.root, width = 600, height=600)
-		canvas.pack()
-		#drawRobot(canvas)
-		#drawRealBeacons(canvas)
-		drawBeacons(canvas)
-		#drawLaser(canvas)
-        	self.button = Button(frame, text="QUIT", fg="red", command=frame.quit)
-        	self.button.pack(side=LEFT)
-		self.root.mainloop()
-
-
-
 #def drawRobot(c):
 	
-
-def drawBeacons(c):
-	global seenBeacons,drawnBeacons
-	c.create_line(0, 0, 200, 100)
-	c.create_line(0, 100, 200, 0, fill="red", dash=(4, 4))
+global canvas
+offset = [400,400]
+realBeacons = [[0,-1,2,52],[1,-1,-2,138],[2,3,0,223]]
+def drawBeacons(data):
+	global seenBeacons,drawnBeacons,canvas,offset
+	
+	#canvas.create_line(0, 100, 200, 0, fill="red", dash=(4, 4))
 	for drawnBeacon in drawnBeacons:
-		c.delete(drawnBeacon)
-	for beacon in seenBeacons:
-		bbox = beacon.x-30, beacon.y-30, beacon.x+30, beacon.y+30
-		create_oval(bbox, fill="red")
+		canvas.delete(drawnBeacon)
+	for beacon in data.beacon:
+		r = realBeacons[beacon.ID][3]/10.0
+		bbox = offset[0]+beacon.x*100-r, offset[1]+beacon.y*100-r, offset[0]+beacon.x*100+r, offset[1]+beacon.y*100+r
+		newBeacon = canvas.create_oval(bbox, fill="red")
+		drawnBeacons.append(newBeacon)
+		print beacon
+		print "drawn at ",bbox
+		#print "drawn Beacon"
+		
+def drawRealBeacons():
+	global canvas,offset,beaconRadii,realBeacons
+	for beacon in realBeacons:
+		bbox = offset[0]+beacon[1]*100-beacon[3]/10.0, offset[1]+beacon[2]*100-beacon[3]/10.0, offset[0]+beacon[1]*100+beacon[3]/10.0, offset[1]+beacon[2]*100+beacon[3]/10.0
+		print "real beacon",beacon,bbox
+		newBeacon = canvas.create_oval(bbox, fill="blue")
+		drawnBeacons.append(newBeacon)
 
 def updateBeacons(beacons):
 	global seenBeacons
 	seenBeacons = beacons.beacon
+	print beacons
 
 def RSAviewer():
-	rsawindow = TkVisualisation()
-
+	#rsawindow = TkVisualisation()
+	#r = RSADraw()
+	global canvas
+	root=Tk()
+	root.protocol("WM_DELETE_WINDOW", root.quit())
+	frame = Frame(root)
+        frame.pack()
+	canvas = Canvas(root, width = 800, height=800)
+	canvas.pack()
+        button = Button(frame, text="QUIT", fg="red", command=frame.quit)
+        button.pack(side=LEFT)
+	canvas.create_line(0, offset[1], offset[0]*2, offset[1])
+	canvas.create_line(offset[0], 0, offset[0],offset[1]*2)
+	drawRealBeacons()
 	rospy.init_node('rsaviewer', anonymous=True)
 	#rospy.Subscriber("scan", LaserScan, callback)
-	rospy.Subscriber('BeaconScan', Beacons, updateBeacons)
-	rospy.spin()
+	rospy.Subscriber('BeaconScan', Beacons, drawBeacons)
+	root.mainloop()
+	
+	
 
 if __name__=="__main__":
 	RSAviewer()
