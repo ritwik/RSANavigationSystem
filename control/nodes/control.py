@@ -58,6 +58,7 @@ def run():
 
     for node in plan.path:
         print "Waiting for next point keypress:", node
+        # here we should connect
         sys.stdin.readline()
         drive(node)
         # plan = pathplanner.planPath(state)
@@ -97,7 +98,7 @@ def lostSpinAround(node):
     
 	#The initial turn is done without any linear movement
     pubTwist.publish(zero)
-    while (state.xCovar > VAR_THRESH or state.yCovar > VAR_THRESH):
+    while (state.xCovar > (VAR_THRESH*.75) or state.yCovar > VAR_THRESH*.75 or (state.thetaCovar > 10.0/180*math.pi*.75)):
         #Publish the twist and wait a little to recalculate (not sure how long this should be for)
         pubTwist.publish(twist)
     
@@ -114,8 +115,6 @@ def control():
 
     run()
 
-    rospy.spin()
-	
 def drive(node):
     global state
 
