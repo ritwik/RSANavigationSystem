@@ -88,13 +88,13 @@ def newTimeAndHeading(fromNode, toCoordinate):
     while bwdHeading < -pi:
         bwdHeading = bwdHeading + 2 * pi
 
-    headingToCentreAtDest = atan2((0 - toCoordinate.y), (0 - toCoordinate.x))
+    headingToCentreAtStart = atan2((0 - fromNode.y), (0 - fromNode.x))
     print "Going to ", toCoordinate.x, toCoordinate.y, "from ", fromNode.x, fromNode.y
-    print headingToCentreAtDest
-    print bwdHeading - headingToCentreAtDest
-    print newHeading - headingToCentreAtDest
+    print headingToCentreAtStart
+    print bwdHeading - headingToCentreAtStart
+    print newHeading - headingToCentreAtStart
 
-    if abs(bwdHeading - headingToCentreAtDest) < abs(newHeading - headingToCentreAtDest):
+    if abs(bwdHeading - headingToCentreAtStart) < abs(newHeading - headingToCentreAtStart):
         return bwdTime, bwdHeading, False
     else:
         return fwdTime, newHeading, True
