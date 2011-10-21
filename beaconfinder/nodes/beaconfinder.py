@@ -12,16 +12,31 @@ import random
 #All these constants are in mm where they refer to a distance
 
 #This sets the maximum distance of a scan point to consider
-DISTANCE_THRESHOLD = 4500 
+DISTANCE_THRESHOLD = 5500 
+#DISTANCE_THRESHOLD = 5500 
 
 #This is the distance difference between 1 point and the next on a scan that is considered an 'edge', i.e. new beacon
-BEACON_JUMP_THRESHOLD = 75
+BEACON_JUMP_THRESHOLD = 150
+#BEACON_JUMP_THRESHOLD = 125
 
 #This is the accepted error from the known beacon radius that we accept, i.e, a circle we find is beacon A, if circle.radius is A.radius+/- BEACON_MATCH_THRESHOLD
-BEACON_MATCH_THRESHOLD = 30
+BEACON_MATCH_THRESHOLD = 35
+#BEACON_MATCH_THRESHOLD = 35
 
 #The max acceptable error from a consensus set to it's predicted circle. This lets us ignore walls. Smaller values = only accept more distinct circles
-ERROR_THRESHOLD = 75
+ERROR_THRESHOLD = 100
+#ERROR_THRESHOLD = 50
+
+RANSAC_ITERATIONS = 40
+RANSAC_CONSENSUS_ERROR_PERC = 0.25
+MIN_CONSENSUS_SIZE = 6
+#RANSAC_ITERATIONS = 40
+#RANSAC_CONSENSUS_ERROR_PERC = 0.2
+#MIN_CONSENSUS_SIZE = 6
+
+
+#original: 20,0.2,5
+
 pub = None
 
 realBeacons = [[0,-1,2,52],[1,-1,-2,138],[2,3,0,223]]
@@ -92,10 +107,10 @@ def getPillarFrom(potentialPoints,k,t,d):
 	
 	[x,y,r] = bestCircle
 	if (bestError < ERROR_THRESHOLD):
-		#print "Keeping pillar: ",potentialPoints[0], " to ",potentialPoints[-1], "with radius: ",r, " and error: ",bestError
+		print "Keeping pillar: ",potentialPoints[0], " to ",potentialPoints[-1], "with radius: ",r, " and error: ",bestError
 		return bestCircle
 	else: 
-		#print "Dropping pillar: ",potentialPoints[0], " to ",potentialPoints[-1]
+		print "Dropping pillar: ",potentialPoints[0], " to ",potentialPoints[-1], "with error: ",bestError
 		return [0,0,0]
 
 
@@ -170,11 +185,13 @@ def callback(data):
 	for potentialPillar in potentialPillars:
 		#rospy.loginfo("Looking at a cloud of %d points, [%.2lf,\t %.2lf \t\ts = %.2lf])", len(potentialPillar),
 		if len(potentialPillar)>=3:
-			pillar = getPillarFrom(potentialPillar,20,0.20,5)
+			pillar = getPillarFrom(potentialPillar,RANSAC_ITERATIONS,RANSAC_CONSENSUS_ERROR_PERC,MIN_CONSENSUS_SIZE)
 			[x,y,r] = pillar
 			if r > 0:	
 				pillars.append(pillar)
 				rospy.loginfo("Looking at a cloud of %d points, found: [%.2lf,\t %.2lf \t %.2lf])", len(potentialPillar), pillar[0],pillar[1],pillar[2]) 
+		else:   
+			print "Dropping pillar because too few points"
 	beacons = generateBeaconList(pillars)
 	rospy.loginfo("Found %d beacons", len(beacons))
 	print beacons
@@ -193,8 +210,8 @@ def beaconfinder():
 	global pub
 	pub = rospy.Publisher('BeaconScan', Beacons)
 	rospy.init_node('beaconfinder', anonymous=True)
-	rospy.Subscriber("scan", LaserScan, callback)
-	#rospy.Subscriber("base_scan", LaserScan, callback)
+	#rospy.Subscriber("scan", LaserScan, callback)
+	rospy.Subscriber("base_scan", LaserScan, callback)
 	rospy.spin()
 
 if __name__ == '__main__':

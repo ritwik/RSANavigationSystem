@@ -138,8 +138,6 @@ def drawBeacons(data):
 		print "drawn at ",bbox
 		#print "drawn Beacon"
 
-	
-
 def updateBeacons(beacons):
 	global seenBeacons
 	seenBeacons = beacons.beacon

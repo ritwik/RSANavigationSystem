@@ -1,3 +1,14 @@
+~~~~~~~~~~~
+Fri Oct 21
+
+- Copy points file to correct plan in script
+- Introduce a pause message to handle when the script stops
+
+
+
+
+
+
 ~~~~~~~~~~
 Tue Oct 18 19:51:53 EST 2011
 So we have:

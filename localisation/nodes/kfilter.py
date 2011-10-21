@@ -10,6 +10,7 @@ from beaconfinder.msg import Beacons
 from std_msgs.msg import Header
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseWithCovariance, Pose, Point, Quaternion, Twist
+from control.msg import Pause
 
 pub = rospy.Publisher('State', State)
 
@@ -22,6 +23,8 @@ prevPose = None;
 
 #Going forwards = 1, backwards = -1
 forward = 0
+
+paused = False
 
 def publishState():
     global pub
@@ -90,6 +93,9 @@ def observationUpdate(data):
     global mean
     global covar
 
+    if paused:
+        return
+
     for b in data.beacon:
         x = mean[0, 0]
         y = mean[1, 0]
@@ -112,7 +118,7 @@ def observationUpdate(data):
         print "Hx = " + str(Hx)
 
         R = array([[1, 1, 1],
-                   [0, (0.02 + 0.01 * (dx ** 2 + dy ** 2)) ** 2, 0],
+                   [0, (0.2 + 0.01 * (dx ** 2 + dy ** 2)) ** 2, 0],
                    [0, 0, 0.1 ** 2]]) 
 
         print "R = " + str(R)
@@ -153,6 +159,10 @@ def observationUpdate(data):
         print "covar = " + str(covar)
 
         publishState()
+
+def pauseCallback(pause):
+    global paused
+    paused = pause.paused
         
 def kfilter():
     global pub
@@ -160,9 +170,9 @@ def kfilter():
     rospy.init_node('localisation', anonymous=True)
     rospy.Subscriber('BeaconScan', Beacons, observationUpdate)
     rospy.Subscriber('cmd_vel', Twist, forwardUpdate)
-    #rospy.Subscriber('pose', PoseWithCovariance, actionUpdate)
-    rospy.Subscriber('pose', Odometry, actionUpdate)
-    #rospy.Subscriber('odom', Odometry, actionUpdate)
+    #rospy.Subscriber('pose', Odometry, actionUpdate)
+    rospy.Subscriber('odom', Odometry, actionUpdate)
+    rospy.Subscriber('Pause', Pause, pauseCallback)
     rospy.spin()
 
 def forwardUpdate(data):
