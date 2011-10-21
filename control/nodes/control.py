@@ -17,7 +17,7 @@ import sys
 import time
 
 #Need a limit so the robot stops trying to get closer (0.1m and 5 degrees) feel free to change
-LIMIT = 0.1
+LIMIT = 0.2
 #ANGULAR_LIMIT = ((5 / 180) * math.pi) 
 ANGULAR_LIMIT = ((5.0 / 180) * math.pi) 
 
@@ -25,7 +25,7 @@ TIME_LIMIT = 10
 
 #This is the top speed of the robot
 TOP_SPEED = 0.4
-TOP_ANGULAR_SPEED = 0.9 
+TOP_ANGULAR_SPEED = 1.0
 
 #This is the distance where the robot begins to slow (0.5m and 45 degrees) they may be wrong, feel free to change them
 SLOW_LIMIT = 0.5
@@ -102,13 +102,13 @@ def spinAround():
         pubTwist.publish(twist)
         time.sleep(0.2)
 
-#            if (twoBeacons):
-#                seenTwoBeacons = True
-#                break
+        if (twoBeacons):
+            time.sleep(2)
+            break
 #
 #        if not seenTwoBeacons:
 #            pubTwist.publish(twist2)
-#
+
     pubTwist.publish(zero)
     
 #def lostSpinAround(node):
@@ -243,6 +243,9 @@ def drive(point):
         if abs(distance) < SLOW_LIMIT:
             forwardSpeed = TOP_SPEED * (distance / SLOW_LIMIT) + SLOW_CONSTANT
             angularSpeed = 0
+            if abs(angleToTurn) >= math.pi / 2:
+                print "Overshot on angle"
+                break
         else:
             forwardSpeed = TOP_SPEED
             if abs(angleToTurn) < ANGULAR_SLOW_LIMIT:

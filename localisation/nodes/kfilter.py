@@ -170,8 +170,8 @@ def kfilter():
     rospy.init_node('localisation', anonymous=True)
     rospy.Subscriber('BeaconScan', Beacons, observationUpdate)
     rospy.Subscriber('cmd_vel', Twist, forwardUpdate)
-    #rospy.Subscriber('pose', Odometry, actionUpdate)
-    rospy.Subscriber('odom', Odometry, actionUpdate)
+    rospy.Subscriber('pose', Odometry, actionUpdate)
+    #rospy.Subscriber('odom', Odometry, actionUpdate)
     rospy.Subscriber('Pause', Pause, pauseCallback)
     rospy.spin()
 
